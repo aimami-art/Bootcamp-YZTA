@@ -10,6 +10,7 @@
 ## 🤖 Ürün İsmi: 
 
 ## 📋 Product Backlog URL
+[Trello Panosu](https://trello.com/b/eOTahhcW)
 
 
 ## 📝 Ürün Açıklaması
