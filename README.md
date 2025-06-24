@@ -39,7 +39,6 @@ Gelen bilgiler ya da önerilen müdahaleler, ilgili uzmana aktarılacak ve uzman
 - RAG (Retrieval-Augmented Generation mimarisi)
 - Prompt Engineering (Özelleştirilmiş ve rol bazlı yönlendirmeler)
 - Pinecone (Vector Veritabanı)
-- GitHub Projects / Trello (Proje Yönetimi)
-- Docker (Dağıtım)
+- Trello (Proje Yönetimi)
 
 
