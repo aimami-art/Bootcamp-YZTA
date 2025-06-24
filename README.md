@@ -40,5 +40,5 @@ Gelen bilgiler ya da önerilen müdahaleler, ilgili uzmana aktarılacak ve uzman
 - Prompt Engineering (Özelleştirilmiş ve rol bazlı yönlendirmeler)
 - Pinecone (Vector Veritabanı)
 - Trello (Proje Yönetimi)
-
+- Docker (Dağıtım)
 
