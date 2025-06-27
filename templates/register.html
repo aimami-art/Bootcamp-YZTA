@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kayıt Ol - Yapay Zeka Asistanı</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🏥 Yapay Zeka Asistanı</h1>
+            <p class="subtitle">Kayıt Ol</p>
+        </header>
+        
+        <main class="main-content">
+            <div class="form-section">
+                <h2>Kayıt Ol</h2>
+                <p>AI destekli tanı sistemine katılın ve uzman desteği alın.</p>
+                
+                <div id="alert-container"></div>
+                
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label for="ad">Ad</label>
+                        <input type="text" id="ad" name="ad" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="soyad">Soyad</label>
+                        <input type="text" id="soyad" name="soyad" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">E-posta</label>
+                        <input type="email" id="email" name="email" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Şifre</label>
+                        <input type="password" id="password" name="password" class="form-control" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" id="registerBtn">
+                        Kayıt Ol
+                    </button>
+                </form>
+                
+                <div class="auth-buttons" style="margin-top: 20px;">
+                    <a href="/login" class="btn btn-secondary">Giriş Yap</a>
+                    <a href="/" class="btn btn-secondary">Ana Sayfa</a>
+                </div>
+            </div>
+        </main>
+        
+        <footer class="footer">
+            <p>&copy; 2024 Yapay Zeka Asistanı - Tıbbi Tanı Sistemi</p>
+        </footer>
+    </div>
+    
+    <script src="/static/js/auth.js"></script>
+</body>
+</html> 
