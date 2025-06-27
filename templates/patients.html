@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hasta Yönetimi - Yapay Zeka Asistanı</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🏥 Yapay Zeka Asistanı</h1>
+            <p class="subtitle">Hasta Yönetimi</p>
+            <button onclick="logout()" class="btn btn-secondary" style="position: absolute; top: 20px; right: 20px;">Çıkış</button>
+        </header>
+        
+        <main class="main-content">
+            <div class="form-section">
+                <h2>Hasta İşlemleri</h2>
+                <p>Yeni hasta ekleyin veya mevcut hastalarınızı görüntüleyin.</p>
+                
+                <div class="action-buttons">
+                    <div class="action-card" onclick="showNewPatientForm()">
+                        <h3>👤 Yeni Hasta</h3>
+                        <p>Yeni hasta kaydı oluşturun</p>
+                    </div>
+                    
+                    <div class="action-card" onclick="showPatientList()">
+                        <h3>📋 Kayıtlı Hastalar</h3>
+                        <p>Mevcut hastalarınızı görüntüleyin</p>
+                    </div>
+                </div>
+                
+                <!-- Yeni Hasta Formu -->
+                <div id="newPatientForm" style="display: none; margin-top: 30px;">
+                    <h3>Yeni Hasta Kaydı</h3>
+                    <div id="alert-container"></div>
+                    
+                    <form id="patientForm">
+                        <div class="form-group">
+                            <label for="patient_ad">Hasta Adı</label>
+                            <input type="text" id="patient_ad" name="ad" class="form-control" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="patient_soyad">Hasta Soyadı</label>
+                            <input type="text" id="patient_soyad" name="soyad" class="form-control" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="patient_tc">T.C. Kimlik No</label>
+                            <input type="text" id="patient_tc" name="tc_kimlik" class="form-control" maxlength="11" required>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success" id="addPatientBtn">
+                            Hasta Kaydet
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="hideNewPatientForm()">
+                            İptal
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Hasta Listesi -->
+                <div id="patientList" style="display: none; margin-top: 30px;">
+                    <h3>Kayıtlı Hastalar</h3>
+                    <div id="patients-container">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            <p>Hastalar yükleniyor...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="auth-buttons" style="margin-top: 30px;">
+                    <a href="/specialty" class="btn btn-secondary">Geri</a>
+                </div>
+            </div>
+        </main>
+        
+        <footer class="footer">
+            <p>&copy; 2024 Yapay Zeka Asistanı - Tıbbi Tanı Sistemi</p>
+        </footer>
+    </div>
+    
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/patients.js"></script>
+</body>
+</html> 

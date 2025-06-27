@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meslek Seçimi - Yapay Zeka Asistanı</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🏥 Yapay Zeka Asistanı</h1>
+            <p class="subtitle">Meslek Dalınızı Seçin</p>
+            <button onclick="logout()" class="btn btn-secondary" style="position: absolute; top: 20px; right: 20px;">Çıkış</button>
+        </header>
+        
+        <main class="main-content">
+            <div class="form-section">
+                <h2>Uzmanlik Alanı Seçimi</h2>
+                <p>Çalışmak istediğiniz tıbbi uzmanlık alanını seçin.</p>
+                
+                <div class="specialty-selection">
+                    <a href="#" onclick="selectSpecialty('noroloji')" class="specialty-option">
+                        <h3>🧠 Nöroloji</h3>
+                        <p>Sinir sistemi hastalıkları, beyin ve omurilik sorunları için AI destekli tanı ve müdahale önerileri.</p>
+                    </a>
+                    
+                    <a href="#" onclick="selectSpecialty('dermatoloji')" class="specialty-option">
+                        <h3>🔬 Dermatoloji</h3>
+                        <p>Cilt hastalıkları, deri sorunları ve dermatolojik vakalar için AI destekli tanı ve müdahale önerileri.</p>
+                    </a>
+                </div>
+            </div>
+        </main>
+        
+        <footer class="footer">
+            <p>&copy; 2024 Yapay Zeka Asistanı - Tıbbi Tanı Sistemi</p>
+        </footer>
+    </div>
+    
+    <script src="/static/js/auth.js"></script>
+    <script>
+        function selectSpecialty(specialty) {
+            localStorage.setItem('selectedSpecialty', specialty);
+            window.location.href = '/patients';
+        }
+    </script>
+</body>
+</html> 
