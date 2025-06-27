@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Asistan - Yapay Zeka Asistanı</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🏥 Yapay Zeka Asistanı</h1>
+            <p class="subtitle">AI Konsültasyon</p>
+            <button onclick="logout()" class="btn btn-secondary" style="position: absolute; top: 20px; right: 20px;">Çıkış</button>
+        </header>
+        
+        <main class="main-content">
+            <div class="ai-chat">
+                <div class="form-section">
+                    <h2 id="patientTitle">AI Konsültasyon</h2>
+                    <p id="specialtyInfo">Seçili meslek dalı ve hasta bilgileri ile AI destekli tanı alın.</p>
+                    
+                    <div class="chat-container" id="chatContainer">
+                        <div class="message ai">
+                            <div class="message-header">🤖 AI Asistan</div>
+                            <div class="message-content">
+                                Merhaba! Ben sizin AI asistanınızım. Hasta ile ilgili semptomları, bulgularını ve sorularınızı paylaşın. Size meslek dalınıza özgü tanı ve müdahale önerileri sunacağım.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="input-section">
+                        <textarea 
+                            id="promptInput" 
+                            class="form-control" 
+                            placeholder="Hasta semptomlarını, bulgularını ve sorularınızı buraya yazın..."
+                            rows="4"
+                        ></textarea>
+                        <button 
+                            id="sendBtn" 
+                            class="btn btn-primary" 
+                            onclick="sendPrompt()"
+                        >
+                            📤 Gönder
+                        </button>
+                    </div>
+                    
+                    <div class="auth-buttons" style="margin-top: 20px;">
+                        <a href="/patients" class="btn btn-secondary">Hasta Listesi</a>
+                        <a href="/specialty" class="btn btn-secondary">Meslek Seçimi</a>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <footer class="footer">
+            <p>&copy; 2024 Yapay Zeka Asistanı - Tıbbi Tanı Sistemi</p>
+        </footer>
+    </div>
+    
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/ai-assistant.js"></script>
+</body>
+</html> 

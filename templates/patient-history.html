@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hasta Geçmişi - Yapay Zeka Asistanı</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🏥 Yapay Zeka Asistanı</h1>
+            <p class="subtitle" id="patientTitle">Hasta Geçmişi</p>
+            <button onclick="logout()" class="btn btn-secondary" style="position: absolute; top: 20px; right: 20px;">Çıkış</button>
+        </header>
+        
+        <main class="main-content">
+            <div class="form-section">
+                <div class="patient-info-card">
+                    <h3>👤 Hasta Bilgileri</h3>
+                    <div id="patientInfo">
+                        <p><strong>Ad Soyad:</strong> <span id="patientName">-</span></p>
+                        <p><strong>TC Kimlik:</strong> <span id="patientTC">-</span></p>
+                        <p><strong>Kayıt Tarihi:</strong> <span id="patientDate">-</span></p>
+                    </div>
+                </div>
+
+                <div class="consultation-history">
+                    <h3>📋 Soru-Cevap Geçmişi</h3>
+                    <div id="historyContainer">
+                        <div class="loading">Geçmiş yükleniyor...</div>
+                    </div>
+                </div>
+
+                <div class="action-buttons" style="margin-top: 30px;">
+                    <button onclick="goBack()" class="btn btn-secondary">← Hasta Listesine Dön</button>
+                </div>
+            </div>
+        </main>
+        
+        <footer class="footer">
+            <p>&copy; 2024 Yapay Zeka Asistanı - Tıbbi Tanı Sistemi</p>
+        </footer>
+    </div>
+    
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/patient-history.js"></script>
+</body>
+</html> 
