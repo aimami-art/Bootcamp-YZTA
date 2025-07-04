@@ -9,7 +9,6 @@
 
 ## 🤖 Ürün İsmi
 
-(imagess/MedIntel.png)
 
 ## 📋 Product Backlog URL
 [Trello Panosu](https://trello.com/b/eOTahhcW)
@@ -74,18 +73,18 @@ Sprint 1'de temel sistem altyapısı ve MVP (Minimum Viable Product) özellikler
 
 
 ## Sprint Board Update
-(imagess/trelloSP1.png)
-(imagess/TrelloSP1_.png)
+![](imagess/trelloSP1.png)
+![](imagess/TrelloSP1_.png)
 
 ## Ürün Durumu ScreenShots
 
-(imagess/app1.png)
-(imagess/app2.png)
-(imagess/app3.png)
-(imagess/app4.png)
-(imagess/app5.png)
-(imagess/app6.png)
-(imagess/app7.png)
-(imagess/app8.png)
-(imagess/app9.png)
-(imagess/app10.png)
+![](imagess/app1.png)
+![](imagess/app2.png)
+![](imagess/app3.png)
+![](imagess/app4.png)
+![](imagess/app5.png)
+![](imagess/app6.png)
+![](imagess/app7.png)
+![](imagess/app8.png)
+![](imagess/app9.png)
+![](imagess/app10.png)
