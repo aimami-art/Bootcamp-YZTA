@@ -29,8 +29,8 @@ Gelen bilgiler ya da önerilen müdahaleler, ilgili uzmana aktarılacak ve uzman
 - 📚 Danışan Geçmişi Kayıtları: Sistem, danışanlardan gelen geçmiş girişleri ve önceki müdahale önerilerini saklar, uzman gerektiğinde geçmişi inceleyebilir.
 
 ## 🎯 Hedef Kitle
-- Psikologlar, psikolojik danışmanlar, terapistler
 - Doktorlar ve sağlık danışmanları
+- Psikologlar, psikolojik danışmanlar, terapistler
 - Öğrenciler
 
 ## 🛠️ Kullanılan Teknolojiler
