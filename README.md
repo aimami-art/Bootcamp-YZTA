@@ -35,14 +35,15 @@ Gelen bilgiler ya da önerilen müdahaleler, ilgili uzmana aktarılacak ve uzman
 
 ## 🛠️ Kullanılan Teknolojiler
 - FastAPI (Backend)
-- React (Frontend)
+- HTML/CSS/JavaScript (Frontend)
 - Gemini API (Yapay Zeka)
 - LangChain (LLM yönetimi ve zincirleme yapı)
-- RAG (Retrieval-Augmented Generation mimarisi)
+- SQLite (Veritabanı)
+- PyJWT (Authentication & JWT Token)
+- Pydantic (Veri validasyonu)
+- Jinja2 (Template Engine)
 - Prompt Engineering (Özelleştirilmiş ve rol bazlı yönlendirmeler)
-- Pinecone (Vector Veritabanı)
 - Trello (Proje Yönetimi)
-- Docker (Dağıtım)
 
 # 📊 Sprint 1
 
