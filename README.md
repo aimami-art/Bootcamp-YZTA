@@ -8,7 +8,7 @@
 - **Zeynep Yıldız** – Developer
 
 ## 🤖 Ürün İsmi
-
+![](imagess/MedIntelSmall.png)
 
 ## 📋 Product Backlog URL
 [Trello Panosu](https://trello.com/b/eOTahhcW)
