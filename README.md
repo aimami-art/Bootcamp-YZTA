@@ -7,7 +7,9 @@
 - **Tuana Zehra Erdoğan** – Developer
 - **Zeynep Yıldız** – Developer
 
-## 🤖 Ürün İsmi: 
+## 🤖 Ürün İsmi
+
+(imagess/MedIntel.png)
 
 ## 📋 Product Backlog URL
 [Trello Panosu](https://trello.com/b/eOTahhcW)
@@ -43,3 +45,47 @@ Gelen bilgiler ya da önerilen müdahaleler, ilgili uzmana aktarılacak ve uzman
 - Trello (Proje Yönetimi)
 - Docker (Dağıtım)
 
+# 📊 Sprint 1
+
+## Sprint Notları
+Sprint 1'de temel sistem altyapısı ve MVP (Minimum Viable Product) özellikleri geliştirilmiştir. Kullanıcı yönetimi, hasta kayıt sistemi ve temel AI konsültasyon özellikleri başarıyla tamamlanmıştır.
+
+## Bu Sprint İçinde Tahmin Edilen Tamamlanacak Puan
+**Toplam Puan: 100**
+
+### Tamamlanan User Story'ler:
+- **Kullanıcı Kayıt ve Giriş Sistemi** (20 puan) ✅
+- **Hasta Kayıt ve Yönetim Sistemi** (25 puan) ✅  
+- **Temel AI Konsültasyon Sistemi** (15 puan) ✅
+- **Web Arayüzü Tasarımı** (15 puan) ✅
+- **Veritabanı Yapısı** (15 puan) ✅
+- **Ürüne İsim Bulma** (5 puan) ✅
+- **Takıma İsim Bulma** (5 puan) ✅
+
+## Puan Tamamlama Mantığı
+- **Kompleksite Değerlendirmesi**: 
+  - 1-5: Basit görevler (Basit görevler)
+  - 6-15: Orta görevler (API endpoint'leri, veritabanı işlemleri)
+  - 16-25: Karmaşık görevler (Authentication, AI entegrasyonu)
+
+## Daily Scrum: WhatsApp üzerinden gerçekleştirilmiştir.
+
+🗂️ [**Daily Scrum Görüntüleri (ZIP)**](<imagess/daily-scrum-images.zip>) - *1.2MB*
+
+
+## Sprint Board Update
+(imagess/trelloSP1.png)
+(imagess/TrelloSP1_.png)
+
+## Ürün Durumu ScreenShots
+
+(imagess/app1.png)
+(imagess/app2.png)
+(imagess/app3.png)
+(imagess/app4.png)
+(imagess/app5.png)
+(imagess/app6.png)
+(imagess/app7.png)
+(imagess/app8.png)
+(imagess/app9.png)
+(imagess/app10.png)
