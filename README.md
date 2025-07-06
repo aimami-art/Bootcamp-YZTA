@@ -1,4 +1,8 @@
 # Takım İsmi
+- NextGen Healers
+
+![](imagess/takım_logo.png)
+
 
 ## 👥 Takım Üyeleri
 - **Bedirhan Portakal** – Developer
