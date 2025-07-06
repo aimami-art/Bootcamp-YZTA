@@ -1,4 +1,4 @@
-# 🧠 Takım İsmi: 
+# Takım İsmi
 
 ## 👥 Takım Üyeleri
 - **Bedirhan Portakal** – Developer
@@ -7,19 +7,19 @@
 - **Tuana Zehra Erdoğan** – Developer
 - **Zeynep Yıldız** – Developer
 
-## 🤖 Ürün İsmi
+# Ürün İsmi
 ![](imagess/MedIntelSmall.png)
 
-## 📋 Product Backlog URL
+## Product Backlog URL
 [Trello Panosu](https://trello.com/b/eOTahhcW)
 
 
-## 📝 Ürün Açıklaması
+## Ürün Açıklaması
 Bu ürün, farklı meslek dallarındaki uzmanlara ve öğrencilere destek sağlayacak web tabanlı bir yapay zeka asistanı geliştirmeyi amaçlamaktadır. Sistem, kullanıcı olarak meslek uzmanlarının ve öğrencilerin kullanımına sunulacak ve danışan ya da hastaların sorunları, metin tabanlı (prompt) ya da sesli giriş yoluyla sisteme iletilecektir.
 Gelen bilgiler ya da önerilen müdahaleler, ilgili uzmana aktarılacak ve uzmanın onayıyla müdahaleler danışana mail yoluyla iletilebilecek.
 
 
-## ⚙️ Ürün Özellikleri
+## Ürün Özellikleri
 - 🗣️ Sesli ve Yazılı Girdi Desteği: Danışan veya hastaların sorunları, yazılı olarak (prompt) ya da sesli giriş şeklinde sisteme alınabilir.
 - 🤖 Yapay Zeka Destekli Analiz: Alınan girdiler, yapay zeka (LLM) tarafından analiz edilerek uygun bilgi, yorum veya müdahale önerileri hazırlanır.
 - 🔗 LangChain Entegrasyonu: LLM iş akışları, prompt yönetimi ve RAG süreçleri için kullanılacak.
@@ -28,12 +28,12 @@ Gelen bilgiler ya da önerilen müdahaleler, ilgili uzmana aktarılacak ve uzman
 - 🔐 Erişim Kontrolü: Her uzman sadece kendi danışanlarıyla ilgili verilere erişebilir.
 - 📚 Danışan Geçmişi Kayıtları: Sistem, danışanlardan gelen geçmiş girişleri ve önceki müdahale önerilerini saklar, uzman gerektiğinde geçmişi inceleyebilir.
 
-## 🎯 Hedef Kitle
+## Hedef Kitle
 - Doktorlar ve sağlık danışmanları
 - Psikologlar, psikolojik danışmanlar, terapistler
 - Öğrenciler
 
-## 🛠️ Kullanılan Teknolojiler
+## Kullanılan Teknolojiler
 - FastAPI (Backend)
 - HTML/CSS/JavaScript (Frontend)
 - Gemini API (Yapay Zeka)
@@ -91,7 +91,7 @@ Sprint 1'de temel sistem altyapısı ve MVP (Minimum Viable Product) özellikler
 ![](imagess/app10.png)
 
 ## Sprint Review
-### ✅ Tamamlanan Özellikler:
+### Tamamlanan Özellikler:
 1. **FastAPI Backend Altyapısı**
    - Authentication sistemi (JWT token)
    - Hasta CRUD işlemleri
@@ -115,20 +115,20 @@ Sprint 1'de temel sistem altyapısı ve MVP (Minimum Viable Product) özellikler
 
 ## Sprint Retrospective
 
-### 🎉 İyi Giden Şeyler:
+### İyi Giden Şeyler:
 - FastAPI uygulama süreci hızlı oldu
 - AI entegrasyonu beklenenden kolay gerçekleşti
 - Veritabanı tasarımı başarılı
 - Frontend tasarımı modern ve kullanışlı
 
-### 🔧 Geliştirilmesi Gerekenler:
+### Geliştirilmesi Gerekenler:
 - LangChain entegrasyonu geliştirilecek
 - Sesli giriş özelliği eksik
 - E-posta gönderimi sistemi henüz yok
 - Yeni fonksiyonlar eklenecek
 - Gerekliyse yeni sayfalar eklenecek
 
-### 📝 Öğrenilenler:
+### Öğrenilenler:
 - Gemini API'nin güçlü olduğu ancak prompt engineering'in önemli olduğu
 - FastAPI'nin hızlı prototip geliştirme için mükemmel olduğu
 - SQLite'ın development aşaması için yeterli olduğu
