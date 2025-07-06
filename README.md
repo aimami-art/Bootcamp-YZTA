@@ -89,3 +89,48 @@ Sprint 1'de temel sistem altyapısı ve MVP (Minimum Viable Product) özellikler
 ![](imagess/app8.png)
 ![](imagess/app9.png)
 ![](imagess/app10.png)
+
+## Sprint Review
+### ✅ Tamamlanan Özellikler:
+1. **FastAPI Backend Altyapısı**
+   - Authentication sistemi (JWT token)
+   - Hasta CRUD işlemleri
+   - AI konsültasyon endpoint'i
+   
+2. **Frontend Arayüzü**
+   - Responsive web tasarımı
+   - Kullanıcı kayıt/giriş sayfaları
+   - Hasta yönetim paneli
+   - AI asistan chat arayüzü
+
+3. **Veritabanı**
+   - SQLite ile kullanıcı ve hasta tabloları
+   - İlişkisel veritabanı yapısı
+
+4. **AI Entegrasyonu**
+   - Google Gemini API entegrasyonu
+   - Meslek dalına göre özelleştirilmiş promptlar
+   - Nöroloji ve Dermatoloji uzmanlaşması
+   - Langchain entegrasyonu
+
+## Sprint Retrospective
+
+### 🎉 İyi Giden Şeyler:
+- FastAPI uygulama süreci hızlı oldu
+- AI entegrasyonu beklenenden kolay gerçekleşti
+- Veritabanı tasarımı başarılı
+- Frontend tasarımı modern ve kullanışlı
+
+### 🔧 Geliştirilmesi Gerekenler:
+- LangChain entegrasyonu geliştirilecek
+- Sesli giriş özelliği eksik
+- E-posta gönderimi sistemi henüz yok
+- Yeni fonksiyonlar eklenecek
+- Gerekliyse yeni sayfalar eklenecek
+
+### 📝 Öğrenilenler:
+- Gemini API'nin güçlü olduğu ancak prompt engineering'in önemli olduğu
+- FastAPI'nin hızlı prototip geliştirme için mükemmel olduğu
+- SQLite'ın development aşaması için yeterli olduğu
+- JWT authentication'ın güvenli ve kolay uygulanabilir olduğu
+
