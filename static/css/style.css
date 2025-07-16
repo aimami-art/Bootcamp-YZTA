@@ -500,45 +500,45 @@ body {
 }
 
 .history-dialog {
-    background: #ffffff;
-    border: 1px solid #e9ecef;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 8px;
+    background: #fefefe;
+}
+
+.consultation-header {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.consultation-header h4 {
+    margin: 0 0 5px 0;
+    color: #2c3e50;
 }
 
 .question-section, .answer-section {
-    margin-bottom: 20px;
+    margin: 15px 0;
 }
 
-.question-section h4 {
-    color: #e74c3c;
-    margin-bottom: 10px;
-    font-size: 1.1em;
-}
-
-.answer-section h4 {
-    color: #3498db;
-    margin-bottom: 10px;
-    font-size: 1.1em;
+.question-section h5, .answer-section h5 {
+    margin: 0 0 8px 0;
+    color: #34495e;
 }
 
 .question-content {
-    background: #fff5f5;
-    border-left: 4px solid #e74c3c;
-    padding: 15px;
-    border-radius: 8px;
-    font-size: 1.05em;
-    line-height: 1.6;
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 4px;
+    border-left: 4px solid #007bff;
 }
 
 .answer-content {
-    background: #f0f8ff;
-    border-left: 4px solid #3498db;
-    padding: 15px;
-    border-radius: 8px;
-    font-size: 1.05em;
-    line-height: 1.6;
+    background: #e3f2fd;
+    padding: 10px;
+    border-radius: 4px;
+    border-left: 4px solid #28a745;
 }
 
 .history-footer {
@@ -550,10 +550,20 @@ body {
 
 .no-history {
     text-align: center;
-    padding: 40px 20px;
-    background: #f8f9fa;
-    border-radius: 12px;
+    padding: 30px;
     color: #6c757d;
+}
+
+.error-message {
+    text-align: center;
+    padding: 30px;
+    color: #6c757d;
+}
+
+.error-message {
+    background: #fee;
+    color: #d32f2f;
+    border-radius: 4px;
 }
 
 .no-history p {

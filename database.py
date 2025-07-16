@@ -27,4 +27,19 @@ def init_db():
                 son_guncelleme DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (doktor_id) REFERENCES kullanicilar (id)
             )
+        ''')
+        
+        
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS consultation_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                hasta_id INTEGER NOT NULL,
+                doktor_id INTEGER NOT NULL,
+                meslek_dali TEXT NOT NULL,
+                soru TEXT NOT NULL,
+                cevap TEXT NOT NULL,
+                tarih DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (hasta_id) REFERENCES hastalar (id),
+                FOREIGN KEY (doktor_id) REFERENCES kullanicilar (id)
+            )
         ''') 

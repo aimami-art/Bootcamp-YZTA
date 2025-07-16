@@ -15,14 +15,14 @@ load_dotenv()
 
 router = APIRouter()
 
-# Memory sistemi - Her hasta için ayrı memory
+
 patient_memories = {}
 
 def get_patient_memory(patient_id: int) -> ConversationBufferWindowMemory:
     """Hasta için memory alır veya oluşturur - sadece mevcut chat oturumu için"""
     if patient_id not in patient_memories:
         patient_memories[patient_id] = ConversationBufferWindowMemory(
-            k=6,  # Son 6 mesajı hatırla (3 soru-cevap çifti)
+            k=10,  
             return_messages=True,
             memory_key="chat_history"
         )
@@ -121,40 +121,47 @@ KURALLAR:
 @router.post("/consultation")
 async def ai_konsultasyon(prompt_data: AIPrompt, current_user: dict = Depends(verify_jwt_token)):
     try:
-        # AI model ve memory hazırla
+        
         model = get_ai_model()
         memory = get_patient_memory(prompt_data.hasta_id)
         prompt_template = create_prompt_template_with_memory(prompt_data.meslek_dali.lower())
         
-        # Output parser
+        
         output_parser = StrOutputParser()
         
-        # Chain oluştur
+        
         chain = prompt_template | model | output_parser
         
-        # Memory'den chat history al (sadece mevcut chat oturumu)
+        
         chat_history = memory.chat_memory.messages
         
-        # AI'dan cevap al
+        
         ai_response = chain.invoke({
             "hasta_durumu": prompt_data.prompt,
             "chat_history": chat_history
         })
         
-        # Yeni mesajları memory'ye ekle
+        
         memory.chat_memory.add_user_message(f"Soru: {prompt_data.prompt}")
         memory.chat_memory.add_ai_message(f"Cevap: {ai_response}")
         
         print(f"LangChain AI yanıtı (Chat Memory ile): {len(ai_response)} karakter")
         print(f"Chat Memory'de {len(memory.chat_memory.messages)} mesaj var")
         
-        # Veritabanını güncelle
+        
         with sqlite3.connect('medical_ai.db') as conn:
+            
             conn.execute('''
                 UPDATE hastalar 
                 SET tani_bilgileri = ?, ai_onerileri = ?, son_guncelleme = CURRENT_TIMESTAMP
                 WHERE id = ? AND doktor_id = ?
             ''', (prompt_data.prompt, ai_response, prompt_data.hasta_id, current_user["user_id"]))
+            
+           
+            conn.execute('''
+                INSERT INTO consultation_history (hasta_id, doktor_id, meslek_dali, soru, cevap)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (prompt_data.hasta_id, current_user["user_id"], prompt_data.meslek_dali, prompt_data.prompt, ai_response))
         
         return {
             "ai_response": ai_response,
@@ -167,6 +174,32 @@ async def ai_konsultasyon(prompt_data: AIPrompt, current_user: dict = Depends(ve
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"AI konsültasyon hatası: {str(e)}")
+
+
+@router.get("/history/{patient_id}")
+async def get_patient_consultation_history(patient_id: int, current_user: dict = Depends(verify_jwt_token)):
+    try:
+        print(f"DEBUG: Hasta ID: {patient_id}, Doktor ID: {current_user['user_id']}")
+        
+        with sqlite3.connect('medical_ai.db') as conn:
+            conn.row_factory = sqlite3.Row
+            
+            
+            results = conn.execute('''
+                SELECT soru, cevap, meslek_dali, tarih
+                FROM consultation_history 
+                WHERE hasta_id = ? AND doktor_id = ?
+                ORDER BY tarih DESC
+            ''', (patient_id, current_user["user_id"])).fetchall()
+            
+            history = [dict(row) for row in results]
+            print(f"DEBUG: Bulunan kayıt sayısı: {len(history)}")
+            
+            return {"history": history}
+    
+    except Exception as e:
+        print(f"DEBUG: Hata oluştu: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Geçmiş yüklenirken hata: {str(e)}")
 
 @router.delete("/clear-memory/{patient_id}")
 async def clear_patient_memory(patient_id: int, current_user: dict = Depends(verify_jwt_token)):
