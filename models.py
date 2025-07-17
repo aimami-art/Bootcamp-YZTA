@@ -15,6 +15,7 @@ class PatientCreate(BaseModel):
     ad: str
     soyad: str
     dogum_tarihi: date
+    email: str
 
 class AIPrompt(BaseModel):
     hasta_id: int

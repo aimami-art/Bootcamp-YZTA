@@ -78,6 +78,7 @@ function displayPatients(patients) {
             <div class="patient-info">
                 <h4>${patient.ad} ${patient.soyad}</h4>
                 <p>Doğum Tarihi: ${new Date(patient.dogum_tarihi).toLocaleDateString('tr-TR')}</p>
+                <p>E-posta: ${patient.email || 'Belirtilmemiş'}</p>
                 <p>Kayıt: ${new Date(patient.kayit_tarihi).toLocaleDateString('tr-TR')}</p>
             </div>
             <div class="patient-actions">
@@ -124,6 +125,11 @@ function validateBirthDate(dateString) {
     return true;
 }
 
+function validateEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
 if (document.getElementById('patientForm')) {
     document.getElementById('patientForm').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -131,14 +137,20 @@ if (document.getElementById('patientForm')) {
         const ad = document.getElementById('patient_ad').value.trim();
         const soyad = document.getElementById('patient_soyad').value.trim();
         const dogumTarihi = document.getElementById('patient_dogum_tarihi').value;
+        const email = document.getElementById('patient_email').value.trim();
         
-        if (!ad || !soyad || !dogumTarihi) {
+        if (!ad || !soyad || !dogumTarihi || !email) {
             showAlert('Lütfen tüm alanları doldurunuz.');
             return;
         }
         
         if (!validateBirthDate(dogumTarihi)) {
             showAlert('Geçerli bir doğum tarihi giriniz.');
+            return;
+        }
+        
+        if (!validateEmail(email)) {
+            showAlert('Geçerli bir e-posta adresi giriniz.');
             return;
         }
         
@@ -155,7 +167,8 @@ if (document.getElementById('patientForm')) {
                 body: JSON.stringify({
                     ad: ad,
                     soyad: soyad,
-                    dogum_tarihi: dogumTarihi
+                    dogum_tarihi: dogumTarihi,
+                    email: email
                 })
             });
             
