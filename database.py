@@ -20,6 +20,7 @@ def init_db():
                 ad TEXT NOT NULL,
                 soyad TEXT NOT NULL,
                 dogum_tarihi DATE NOT NULL,
+                email TEXT,
                 doktor_id INTEGER NOT NULL,
                 tani_bilgileri TEXT,
                 ai_onerileri TEXT,
