@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from datetime import date
 
 class UserRegister(BaseModel):
     ad: str
@@ -13,7 +14,7 @@ class UserLogin(BaseModel):
 class PatientCreate(BaseModel):
     ad: str
     soyad: str
-    tc_kimlik: str
+    dogum_tarihi: date
 
 class AIPrompt(BaseModel):
     hasta_id: int

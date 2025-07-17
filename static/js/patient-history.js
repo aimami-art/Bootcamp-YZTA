@@ -61,7 +61,7 @@ function displayPatientInfo() {
     
     document.getElementById('patientTitle').textContent = `${currentPatientData.ad} ${currentPatientData.soyad} - Geçmiş`;
     document.getElementById('patientName').textContent = `${currentPatientData.ad} ${currentPatientData.soyad}`;
-    document.getElementById('patientTC').textContent = currentPatientData.tc_kimlik;
+    document.getElementById('patientBirthDate').textContent = formatDate(currentPatientData.dogum_tarihi);
     document.getElementById('patientDate').textContent = formatDate(currentPatientData.kayit_tarihi);
 }
 
