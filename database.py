@@ -19,7 +19,7 @@ def init_db():
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 ad TEXT NOT NULL,
                 soyad TEXT NOT NULL,
-                tc_kimlik TEXT NOT NULL,
+                dogum_tarihi DATE NOT NULL,
                 doktor_id INTEGER NOT NULL,
                 tani_bilgileri TEXT,
                 ai_onerileri TEXT,

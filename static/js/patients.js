@@ -77,7 +77,7 @@ function displayPatients(patients) {
         <div class="patient-item">
             <div class="patient-info">
                 <h4>${patient.ad} ${patient.soyad}</h4>
-                <p>TC: ${patient.tc_kimlik}</p>
+                <p>Doğum Tarihi: ${new Date(patient.dogum_tarihi).toLocaleDateString('tr-TR')}</p>
                 <p>Kayıt: ${new Date(patient.kayit_tarihi).toLocaleDateString('tr-TR')}</p>
             </div>
             <div class="patient-actions">
@@ -105,28 +105,21 @@ function viewPatientHistory(patientId) {
     window.location.href = '/patient-history';
 }
 
-function validateTCKimlik(tc) {
-    if (tc.length !== 11) return false;
-    if (!/^\d+$/.test(tc)) return false;
-    if (tc[0] === '0') return false;
+function validateBirthDate(dateString) {
+    const birthDate = new Date(dateString);
+    const today = new Date();
     
-    let sum = 0;
-    for (let i = 0; i < 10; i++) {
-        sum += parseInt(tc[i]);
+    // Doğum tarihi bugünden ileri olamaz
+    if (birthDate > today) {
+        return false;
     }
     
-    if (sum % 10 !== parseInt(tc[10])) return false;
-    
-    let oddSum = 0, evenSum = 0;
-    for (let i = 0; i < 9; i++) {
-        if (i % 2 === 0) {
-            oddSum += parseInt(tc[i]);
-        } else {
-            evenSum += parseInt(tc[i]);
-        }
+    // Doğum tarihi çok eski olamaz (150 yıldan fazla)
+    const maxAge = new Date();
+    maxAge.setFullYear(maxAge.getFullYear() - 150);
+    if (birthDate < maxAge) {
+        return false;
     }
-    
-    if (((oddSum * 7) - evenSum) % 10 !== parseInt(tc[9])) return false;
     
     return true;
 }
@@ -137,15 +130,15 @@ if (document.getElementById('patientForm')) {
         
         const ad = document.getElementById('patient_ad').value.trim();
         const soyad = document.getElementById('patient_soyad').value.trim();
-        const tcKimlik = document.getElementById('patient_tc').value.trim();
+        const dogumTarihi = document.getElementById('patient_dogum_tarihi').value;
         
-        if (!ad || !soyad || !tcKimlik) {
+        if (!ad || !soyad || !dogumTarihi) {
             showAlert('Lütfen tüm alanları doldurunuz.');
             return;
         }
         
-        if (!validateTCKimlik(tcKimlik)) {
-            showAlert('Geçerli bir T.C. Kimlik numarası giriniz.');
+        if (!validateBirthDate(dogumTarihi)) {
+            showAlert('Geçerli bir doğum tarihi giriniz.');
             return;
         }
         
@@ -162,7 +155,7 @@ if (document.getElementById('patientForm')) {
                 body: JSON.stringify({
                     ad: ad,
                     soyad: soyad,
-                    tc_kimlik: tcKimlik
+                    dogum_tarihi: dogumTarihi
                 })
             });
             

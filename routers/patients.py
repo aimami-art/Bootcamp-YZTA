@@ -9,9 +9,9 @@ router = APIRouter()
 async def hasta_ekle(patient: PatientCreate, current_user: dict = Depends(verify_jwt_token)):
     with sqlite3.connect('medical_ai.db') as conn:
         db = conn.execute('''
-            INSERT INTO hastalar (ad, soyad, tc_kimlik, doktor_id)
+            INSERT INTO hastalar (ad, soyad, dogum_tarihi, doktor_id)
             VALUES (?, ?, ?, ?)
-        ''', (patient.ad, patient.soyad, patient.tc_kimlik, current_user["user_id"]))
+        ''', (patient.ad, patient.soyad, patient.dogum_tarihi, current_user["user_id"]))
         
         patient_id = db.lastrowid
         
@@ -23,7 +23,7 @@ async def hasta_listesi(current_user: dict = Depends(verify_jwt_token)):
         conn.row_factory = sqlite3.Row
         
         results = conn.execute('''
-            SELECT id, ad, soyad, tc_kimlik, kayit_tarihi, tani_bilgileri, ai_onerileri, son_guncelleme
+            SELECT id, ad, soyad, dogum_tarihi, kayit_tarihi, tani_bilgileri, ai_onerileri, son_guncelleme
             FROM hastalar 
             WHERE doktor_id = ?
             ORDER BY kayit_tarihi DESC
