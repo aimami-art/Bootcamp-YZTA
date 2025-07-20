@@ -163,7 +163,7 @@ Sprint 2'de sistem üzerinde önemli iyileştirmeler ve yeni özellikler gelişt
 
 ## Daily Scrum: WhatsApp üzerinden gerçekleştirilmiştir.
 
-
+[Bağlantı metni](https://drive.google.com/drive/folders/1E73AgaLtTcYYkRNrP4ZHfv20VyfhWtTd?usp=sharing)
 
 ## Sprint Board Update
 ![](imagess/Sprint_2_Trello2.png)
