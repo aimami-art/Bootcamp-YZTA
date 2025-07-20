@@ -11,5 +11,6 @@ langchain==0.1.0
 langchain-google-genai==1.0.0
 langchain-core==0.1.0
 langchain-community==0.0.10
+google-cloud-speech==2.26.0
 
 # python için 3.8 veya üstü gereklidir

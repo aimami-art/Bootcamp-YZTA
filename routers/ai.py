@@ -18,6 +18,11 @@ router = APIRouter()
 
 patient_memories = {}
 
+
+from google.cloud import speech
+import io
+
+
 def get_patient_memory(patient_id: int) -> ConversationBufferWindowMemory:
     """Hasta için memory alır veya oluşturur - sadece mevcut chat oturumu için"""
     if patient_id not in patient_memories:
@@ -234,3 +239,28 @@ async def get_memory_status(patient_id: int, current_user: dict = Depends(verify
             }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Memory durumu alınamadı: {str(e)}") 
+    
+
+@router.post("/speech-to-text")
+async def speech_to_text(audio: UploadFile = File(...)):
+    """Google Cloud Speech-to-Text ile ses dosyasını metne çevirir."""
+    try:
+        client = speech.SpeechClient()
+        audio_bytes = await audio.read()
+        audio_content = speech.RecognitionAudio(content=audio_bytes)
+        config = speech.RecognitionConfig(
+            encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+            sample_rate_hertz=16000,
+            language_code="tr-TR"
+        )
+        response = client.recognize(config=config, audio=audio_content)
+        transcript = ""
+        for result in response.results:
+            transcript += result.alternatives[0].transcript + " "
+        transcript = transcript.strip()
+        if not transcript:
+            raise HTTPException(status_code=400, detail="Ses tanınamadı veya boş.")
+        return {"transcript": transcript}
+    except Exception as e:
+        print(f"Speech-to-Text hata: {e}")
+        raise HTTPException(status_code=500, detail=f"Speech-to-Text hata: {str(e)}")

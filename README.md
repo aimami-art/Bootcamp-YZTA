@@ -138,3 +138,114 @@ Sprint 1'de temel sistem altyapısı ve MVP (Minimum Viable Product) özellikler
 - SQLite'ın development aşaması için yeterli olduğu
 - JWT authentication'ın güvenli ve kolay uygulanabilir olduğu
 
+# 📊 Sprint 2
+
+## Sprint Notları
+Sprint 2'de sistem üzerinde önemli iyileştirmeler ve yeni özellikler geliştirilmiştir. Langchain ile AI memory eklenmiştir, hastanın tüm soru-cevap geçmişinin kayıt edilmesi gerçekleşmiştir, hastanın TC nosu yerine doğum tarihi bilgileri değişikliği yapılmıştır, hasta kayıt sisteminde ek olarak e-posta bilgisi eklenmiştir, prompt engineering geliştirilmiştir, db tabloları güncellenmiştir, profesyonel sayfa tasarımları yapılmış ve AI ile sesli giriş sistemi entegre edilmiştir.
+
+## Bu Sprint İçinde Tahmin Edilen Tamamlanacak Puan
+**Toplam Puan: 100**
+
+### Tamamlanan User Story'ler:
+- **Langchain AI Memory Entegrasyonu** (20 puan) ✅
+- **Hasta Soru-Cevap Geçmişi Kayıt Sistemi** (10 puan) ✅  
+- **Hasta Kayıt Sistemi Güncellemeleri** (10 puan) ✅
+- **Prompt Engineering Geliştirmeleri** (15 puan) ✅
+- **Veritabanı Tablo Güncellemeleri** (10 puan) ✅
+- **Profesyonel Sayfa Tasarımları** (15 puan) ✅
+- **AI Sesli Giriş Sistemi Entegrasyonu** (20 puan) ✅
+
+## Puan Tamamlama Mantığı
+- **Kompleksite Değerlendirmesi**: 
+  - 1-10: Basit görevler 
+  - 11-15: Orta görevler 
+  - 16-20: Karmaşık görevler 
+
+## Daily Scrum: WhatsApp üzerinden gerçekleştirilmiştir.
+
+
+
+## Sprint Board Update
+![](imagess/Sprint_2_Trello2.png)
+![](imagess/Sprint_2_Trello.png)
+
+## Ürün Durumu ScreenShots
+
+![](imagess/app21.png)
+![](imagess/ProHome.jpeg)
+![](imagess/DanışanPanel.jpeg)
+![](imagess/UzmanPanel.jpeg)
+![](imagess/NewHastaKayıt.jpeg)
+
+## Sprint Review
+### Tamamlanan Özellikler:
+1. **Langchain AI Memory Entegrasyonu**
+   - LangChain framework entegrasyonu
+   - Konuşma hafızası sistemi
+   - Bağlamsal soru-cevap devamlılığı
+   - Gelişmiş AI yanıt kalitesi
+   
+2. **Hasta Soru-Cevap Geçmişi Kayıt Sistemi**
+   - Tüm konsültasyon geçmişi veritabanında saklanıyor
+   - Hasta bazlı geçmiş görüntüleme
+   - Soru-cevap eşleştirme sistemi
+   - Geçmiş analiz ve takip imkanı
+
+3. **Hasta Kayıt Sistemi Güncellemeleri**
+   - TC kimlik numarası yerine doğum tarihi bilgisi
+   - E-posta adresi zorunlu alan olarak eklendi
+   - Gelişmiş hasta profil yönetimi
+   - Veri doğrulama sistemleri
+
+4. **Prompt Engineering Geliştirmeleri**
+   - Daha etkili AI yönlendirme sistemleri
+   - Meslek dalına özel prompt optimizasyonları
+   - Yanıt kalitesi iyileştirmeleri
+   - Contextual prompt yönetimi
+
+5. **Veritabanı Tablo Güncellemeleri**
+   - Hasta tablosu yapısal değişiklikler
+   - Yeni alan eklemeleri ve indekslemeler
+   - Performans optimizasyonları
+   - Veri bütünlüğü kontrolleri
+
+6. **Profesyonel Sayfa Tasarımları**
+   - Modern ve kullanıcı dostu arayüz tasarımı
+   - Gelişmiş UX/UI deneyimi
+   - Responsive tasarım iyileştirmeleri
+   - Marka kimliği entegrasyonu
+
+7. **AI Sesli Giriş Sistemi Entegrasyonu**
+   - Konuşma tanıma teknolojisi entegrasyonu
+   - Sesli komut işleme sistemi
+   - Metin-konuşma dönüştürme özelliği
+   - Çok dilli sesli giriş desteği
+
+## Sprint Retrospective
+
+### İyi Giden Şeyler:
+- LangChain entegrasyonu AI performansını önemli ölçüde artırdı
+- Hasta soru-cevap geçmişi takibi sistem değerini yükseltti
+- TC numarası yerine doğum tarihi kullanımı veri güvenliğini artırdı
+- E-posta alanı eklenmesi iletişim imkanlarını genişletti
+- Prompt engineering geliştirmeleri daha kaliteli yanıtlar sağladı
+- Profesyonel tasarım kullanıcı deneyimini iyileştirdi
+- Sesli giriş sistemi sistemin erişilebilirliğini artırdı
+
+### Geliştirilmesi Gerekenler:
+- E-posta bildirim sistemi daha da geliştirilecek
+- RAG sistemi entegrasyonu tamamlanacak
+- Daha fazla meslek dalı eklenecek
+- Raporlama ve analitik özellikler geliştirilecek
+- Çoklu dil desteği eklenebilir
+
+### Öğrenilenler:
+- LangChain'in konuşma hafızası konusundaki gücü anlaşıldı
+- Hasta geçmişi takibinin klinik değeri kavrandı
+- Veri güvenliği ve mahremiyetin önemi vurgulandı
+- Prompt engineering'in AI kalitesine doğrudan etkisi gözlemlendi
+- Sesli arayüzün kullanıcı deneyimindeki rolü anlaşıldı
+- Veritabanı yapısının esnekliğinin önemi kavrandı
+- Profesyonel tasarımın güven oluşturmadaki etkisi görüldü
+
+

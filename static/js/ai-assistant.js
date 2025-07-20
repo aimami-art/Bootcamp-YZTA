@@ -203,3 +203,51 @@ function addSamplePrompts() {
 }
 
 setTimeout(addSamplePrompts, 1000); 
+
+
+let recognizing = false;
+let recognition;
+
+if ('webkitSpeechRecognition' in window) {
+    recognition = new webkitSpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'tr-TR';
+
+    recognition.onstart = function() {
+        recognizing = true;
+        document.getElementById('micBtn').classList.add('recording');
+        document.getElementById('micBtn').innerText = '🛑';
+    };
+    recognition.onend = function() {
+        recognizing = false;
+        document.getElementById('micBtn').classList.remove('recording');
+        document.getElementById('micBtn').innerText = '🎤';
+    };
+    recognition.onerror = function(event) {
+        recognizing = false;
+        document.getElementById('micBtn').classList.remove('recording');
+        document.getElementById('micBtn').innerText = '🎤';
+        showAlert('Ses tanıma hatası: ' + event.error);
+    };
+    recognition.onresult = function(event) {
+        if (event.results.length > 0) {
+            const transcript = event.results[0][0].transcript;
+            const promptInput = document.getElementById('promptInput');
+            promptInput.value += (promptInput.value ? ' ' : '') + transcript;
+            promptInput.focus();
+        }
+    };
+
+    document.getElementById('micBtn').addEventListener('click', function() {
+        if (recognizing) {
+            recognition.stop();
+        } else {
+            recognition.start();
+        }
+    });
+} else {
+    document.getElementById('micBtn').addEventListener('click', function() {
+        showAlert('Tarayıcınızda sesle yazma desteklenmiyor.');
+    });
+}
