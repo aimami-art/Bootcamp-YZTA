@@ -1,5 +1,4 @@
 from fastapi import APIRouter, HTTPException, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import sqlite3
 import hashlib
 import jwt
@@ -20,6 +19,7 @@ security = HTTPBearer()
 
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
+
 
 def verify_password(password: str, hashed: str) -> bool:
     return hash_password(password) == hashed
@@ -48,32 +48,30 @@ async def kullanici_kayit(user: UserRegister):
             result = conn.execute("SELECT id FROM kullanicilar WHERE email = ?", (user.email,)).fetchone()
             if result:
                 raise HTTPException(status_code=400, detail="Bu email zaten kayıtlı")
-            
+
             hashed_password = hash_password(user.sifre)
             db = conn.execute('''
-                INSERT INTO kullanicilar (ad, soyad, email, sifre_hash, meslek_dali)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (user.ad, user.soyad, user.email, hashed_password, None))
-            
+                              INSERT INTO kullanicilar (ad, soyad, email, sifre_hash, meslek_dali)
+                              VALUES (?, ?, ?, ?, ?)
+                              ''', (user.ad, user.soyad, user.email, hashed_password, None))
+
             user_id = db.lastrowid
-            
-            token = create_jwt_token(user_id, user.email)
-            
-            return {"message": "Kayıt başarılı", "token": token, "user_id": user_id}
-    
+
+            return {"message": "Kayıt başarılı", "user_id": user_id}
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.post("/login")
 async def kullanici_giris(user: UserLogin):
     with sqlite3.connect('medical_ai.db') as conn:
         result = conn.execute("SELECT id, sifre_hash FROM kullanicilar WHERE email = ?", (user.email,)).fetchone()
-        
+
         if not result or not verify_password(user.sifre, result[1]):
             raise HTTPException(status_code=401, detail="Email veya şifre hatalı")
-        
+
         token = create_jwt_token(result[0], user.email)
-        
-        return {"message": "Giriş başarılı", "token": token, "user_id": result[0]} 
+
+        return {"message": "Giriş başarılı", "token": token, "user_id": result[0]}

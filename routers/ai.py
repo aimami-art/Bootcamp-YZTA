@@ -11,33 +11,38 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.schema import BaseMessage, HumanMessage, AIMessage
 
+from google.cloud import speech
+import io
+
 load_dotenv()
 
 router = APIRouter()
 
-
 patient_memories = {}
+
 
 def get_patient_memory(patient_id: int) -> ConversationBufferWindowMemory:
     """Hasta için memory alır veya oluşturur - sadece mevcut chat oturumu için"""
     if patient_id not in patient_memories:
         patient_memories[patient_id] = ConversationBufferWindowMemory(
-            k=10,  
+            k=10,
             return_messages=True,
             memory_key="chat_history"
         )
     return patient_memories[patient_id]
 
+
 def get_ai_model():
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
     if not GEMINI_API_KEY:
         raise HTTPException(status_code=400, detail="GEMINI_API_KEY bulunamadı")
-    
+
     return ChatGoogleGenerativeAI(
         model="gemini-1.5-flash",
         google_api_key=GEMINI_API_KEY,
-        temperature=0.1  
+        temperature=0.1
     )
+
 
 def get_examples(specialty):
     examples = {
@@ -56,19 +61,20 @@ def get_examples(specialty):
     }
     return examples.get(specialty, [])
 
+
 def create_prompt_template_with_memory(specialty):
     examples = get_examples(specialty)
-    
+
     example_prompt = ChatPromptTemplate.from_messages([
         ("human", "Hasta Durumu: {hasta_durumu}"),
         ("ai", "{tani_onerisi}")
     ])
-    
+
     few_shot_prompt = FewShotChatMessagePromptTemplate(
         example_prompt=example_prompt,
         examples=examples,
     )
-    
+
     system_prompts = {
         "noroloji": """Sen uzman bir nöroloji doktorusun. Bir meslektaşın (doktor) ile konsültasyon yapıyorsun. Hasta durumlarını değerlendirip, kanıta dayalı tıp prensiplerine uygun tanı önerileri sunuyorsun.
 
@@ -109,66 +115,51 @@ KURALLAR:
 - Kesin tanı koyma, "olası" ifadesi kullan
 """
     }
-    
+
     final_prompt = ChatPromptTemplate.from_messages([
         ("system", system_prompts.get(specialty, "Sen bir tıp uzmanısın.")),
         few_shot_prompt,
-        ("human", "Chat Geçmişi: {chat_history}\n\nHasta Durumu: {hasta_durumu}\n\nLütfen yukarıdaki format ve kurallara uyarak değerlendirme yap.")
+        ("human",
+         "Chat Geçmişi: {chat_history}\n\nHasta Durumu: {hasta_durumu}\n\nLütfen yukarıdaki format ve kurallara uyarak değerlendirme yap.")
     ])
-    
+
     return final_prompt
 
+
 @router.post("/consultation")
-async def ai_konsultasyon(prompt_data: AIPrompt, current_user: dict = Depends(verify_jwt_token)):
+async def ai_konsultasyon(prompt_data: AIPrompt):
     try:
-        
         model = get_ai_model()
         memory = get_patient_memory(prompt_data.hasta_id)
         prompt_template = create_prompt_template_with_memory(prompt_data.meslek_dali.lower())
-        
-        
         output_parser = StrOutputParser()
-        
-        
         chain = prompt_template | model | output_parser
-        
-        
         chat_history = memory.chat_memory.messages
-        
-        
         ai_response = chain.invoke({
             "hasta_durumu": prompt_data.prompt,
             "chat_history": chat_history
         })
-        
-        
         memory.chat_memory.add_user_message(f"Soru: {prompt_data.prompt}")
         memory.chat_memory.add_ai_message(f"Cevap: {ai_response}")
-        
         print(f"LangChain AI yanıtı (Chat Memory ile): {len(ai_response)} karakter")
         print(f"Chat Memory'de {len(memory.chat_memory.messages)} mesaj var")
-        
-        
         with sqlite3.connect('medical_ai.db') as conn:
-            
             conn.execute('''
-                UPDATE hastalar 
-                SET tani_bilgileri = ?, ai_onerileri = ?, son_guncelleme = CURRENT_TIMESTAMP
-                WHERE id = ? AND doktor_id = ?
-            ''', (prompt_data.prompt, ai_response, prompt_data.hasta_id, current_user["user_id"]))
-            
-           
+                         UPDATE hastalar
+                         SET tani_bilgileri = ?,
+                             ai_onerileri   = ?,
+                             son_guncelleme = CURRENT_TIMESTAMP
+                         WHERE id = ?
+                         ''', (prompt_data.prompt, ai_response, prompt_data.hasta_id))
             conn.execute('''
-                INSERT INTO consultation_history (hasta_id, doktor_id, meslek_dali, soru, cevap)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (prompt_data.hasta_id, current_user["user_id"], prompt_data.meslek_dali, prompt_data.prompt, ai_response))
-        
+                         INSERT INTO consultation_history (hasta_id, meslek_dali, soru, cevap)
+                         VALUES (?, ?, ?, ?)
+                         ''', (prompt_data.hasta_id, prompt_data.meslek_dali, prompt_data.prompt, ai_response))
         return {
             "ai_response": ai_response,
             "memory_messages_count": len(memory.chat_memory.messages),
-            "is_first_message": len(memory.chat_memory.messages) == 2  # İlk soru-cevap çifti
+            "is_first_message": len(memory.chat_memory.messages) == 2
         }
-    
     except Exception as e:
         print(f"AI konsültasyon hatası: {e}")
         import traceback
@@ -177,32 +168,27 @@ async def ai_konsultasyon(prompt_data: AIPrompt, current_user: dict = Depends(ve
 
 
 @router.get("/history/{patient_id}")
-async def get_patient_consultation_history(patient_id: int, current_user: dict = Depends(verify_jwt_token)):
+async def get_patient_consultation_history(patient_id: int):
     try:
-        print(f"DEBUG: Hasta ID: {patient_id}, Doktor ID: {current_user['user_id']}")
-        
+        print(f"DEBUG: Hasta ID: {patient_id}")
         with sqlite3.connect('medical_ai.db') as conn:
             conn.row_factory = sqlite3.Row
-            
-            
             results = conn.execute('''
-                SELECT soru, cevap, meslek_dali, tarih
-                FROM consultation_history 
-                WHERE hasta_id = ? AND doktor_id = ?
-                ORDER BY tarih DESC
-            ''', (patient_id, current_user["user_id"])).fetchall()
-            
+                                   SELECT soru, cevap, meslek_dali, tarih
+                                   FROM consultation_history
+                                   WHERE hasta_id = ?
+                                   ORDER BY tarih DESC
+                                   ''', (patient_id,)).fetchall()
             history = [dict(row) for row in results]
             print(f"DEBUG: Bulunan kayıt sayısı: {len(history)}")
-            
             return {"history": history}
-    
     except Exception as e:
         print(f"DEBUG: Hata oluştu: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Geçmiş yüklenirken hata: {str(e)}")
 
+
 @router.delete("/clear-memory/{patient_id}")
-async def clear_patient_memory(patient_id: int, current_user: dict = Depends(verify_jwt_token)):
+async def clear_patient_memory(patient_id: int):
     """Hasta memory'sini temizler"""
     try:
         if patient_id in patient_memories:
@@ -213,8 +199,9 @@ async def clear_patient_memory(patient_id: int, current_user: dict = Depends(ver
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Memory temizleme hatası: {str(e)}")
 
+
 @router.get("/memory-status/{patient_id}")
-async def get_memory_status(patient_id: int, current_user: dict = Depends(verify_jwt_token)):
+async def get_memory_status(patient_id: int):
     """Hasta memory durumunu gösterir"""
     try:
         if patient_id in patient_memories:
@@ -223,7 +210,8 @@ async def get_memory_status(patient_id: int, current_user: dict = Depends(verify
                 "patient_id": patient_id,
                 "message_count": len(memory.chat_memory.messages),
                 "memory_exists": True,
-                "last_messages": [msg.content for msg in memory.chat_memory.messages[-4:]] if memory.chat_memory.messages else []
+                "last_messages": [msg.content for msg in
+                                  memory.chat_memory.messages[-4:]] if memory.chat_memory.messages else []
             }
         else:
             return {
@@ -233,4 +221,29 @@ async def get_memory_status(patient_id: int, current_user: dict = Depends(verify
                 "last_messages": []
             }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Memory durumu alınamadı: {str(e)}") 
+        raise HTTPException(status_code=500, detail=f"Memory durumu alınamadı: {str(e)}")
+
+
+@router.post("/speech-to-text")
+async def speech_to_text(audio: UploadFile = File(...)):
+    """Google Cloud Speech-to-Text ile ses dosyasını metne çevirir."""
+    try:
+        client = speech.SpeechClient()
+        audio_bytes = await audio.read()
+        audio_content = speech.RecognitionAudio(content=audio_bytes)
+        config = speech.RecognitionConfig(
+            encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+            sample_rate_hertz=16000,
+            language_code="tr-TR"
+        )
+        response = client.recognize(config=config, audio=audio_content)
+        transcript = ""
+        for result in response.results:
+            transcript += result.alternatives[0].transcript + " "
+        transcript = transcript.strip()
+        if not transcript:
+            raise HTTPException(status_code=400, detail="Ses tanınamadı veya boş.")
+        return {"transcript": transcript}
+    except Exception as e:
+        print(f"Speech-to-Text hata: {e}")
+        raise HTTPException(status_code=500, detail=f"Speech-to-Text hata: {str(e)}")

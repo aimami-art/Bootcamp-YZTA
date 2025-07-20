@@ -23,21 +23,17 @@ function initializePatientHistory() {
 
 async function loadPatientData() {
     try {
-        const token = getAuthToken();
         const response = await fetch('/api/patients/', {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+            method: 'GET'
         });
-        
+
         if (response.ok) {
             const data = await response.json();
             const patients = data.patients || data;
             console.log('Hasta verileri:', patients);
             currentPatientData = patients.find(p => p.id == currentPatientId);
             console.log('Seçilen hasta:', currentPatientData);
-            
+
             if (currentPatientData) {
                 displayPatientInfo();
                 displayPatientHistory();
@@ -58,7 +54,7 @@ async function loadPatientData() {
 
 function displayPatientInfo() {
     if (!currentPatientData) return;
-    
+
     document.getElementById('patientTitle').textContent = `${currentPatientData.ad} ${currentPatientData.soyad} - Geçmiş`;
     document.getElementById('patientName').textContent = `${currentPatientData.ad} ${currentPatientData.soyad}`;
     document.getElementById('patientBirthDate').textContent = formatDate(currentPatientData.dogum_tarihi);
@@ -68,37 +64,37 @@ function displayPatientInfo() {
 
 async function displayPatientHistory() {
     const historyContainer = document.getElementById('historyContainer');
-    
+
     try {
-        
+
         const token = getAuthToken();
         console.log('Hasta ID:', currentPatientId);
         console.log('Token:', token ? 'Var' : 'Yok');
-        
+
         const response = await fetch(`/api/ai/history/${currentPatientId}`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`
             }
         });
-        
+
         console.log('Response status:', response.status);
         console.log('Response OK:', response.ok);
-        
+
         if (response.ok) {
             const data = await response.json();
             console.log('API Response:', data);
             const history = data.history || [];
             console.log('History length:', history.length);
-            
+
             if (history.length > 0) {
                 let historyHtml = '';
-                
+
                 history.forEach((consultation, index) => {
                     historyHtml += `
                         <div class="history-dialog" style="margin-bottom: 20px; border: 1px solid #ddd; padding: 15px; border-radius: 8px;">
                             <div class="consultation-header">
-                                <h4>🩺 Konsültasyon ${history.length - index}</h4>
+                                <h4>🧺 Konsültasyon ${history.length - index}</h4>
                                 <small>Uzmanlık: ${consultation.meslek_dali} | Tarih: ${formatDate(consultation.tarih)}</small>
                             </div>
                             

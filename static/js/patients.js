@@ -43,7 +43,7 @@ async function loadPatients() {
                 'Authorization': `Bearer ${token}`
             }
         });
-        
+
         if (response.ok) {
             const data = await response.json();
             currentPatients = data.patients;
@@ -63,7 +63,7 @@ async function loadPatients() {
 
 function displayPatients(patients) {
     const container = document.getElementById('patients-container');
-    
+
     if (patients.length === 0) {
         container.innerHTML = `
             <div class="alert alert-info">
@@ -72,7 +72,7 @@ function displayPatients(patients) {
         `;
         return;
     }
-    
+
     const patientsHtml = patients.map(patient => `
         <div class="patient-item">
             <div class="patient-info">
@@ -91,7 +91,7 @@ function displayPatients(patients) {
             </div>
         </div>
     `).join('');
-    
+
     container.innerHTML = patientsHtml;
 }
 
@@ -109,19 +109,19 @@ function viewPatientHistory(patientId) {
 function validateBirthDate(dateString) {
     const birthDate = new Date(dateString);
     const today = new Date();
-    
+
     // Doğum tarihi bugünden ileri olamaz
     if (birthDate > today) {
         return false;
     }
-    
+
     // Doğum tarihi çok eski olamaz (150 yıldan fazla)
     const maxAge = new Date();
     maxAge.setFullYear(maxAge.getFullYear() - 150);
     if (birthDate < maxAge) {
         return false;
     }
-    
+
     return true;
 }
 
@@ -133,29 +133,29 @@ function validateEmail(email) {
 if (document.getElementById('patientForm')) {
     document.getElementById('patientForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        
+
         const ad = document.getElementById('patient_ad').value.trim();
         const soyad = document.getElementById('patient_soyad').value.trim();
         const dogumTarihi = document.getElementById('patient_dogum_tarihi').value;
         const email = document.getElementById('patient_email').value.trim();
-        
+
         if (!ad || !soyad || !dogumTarihi || !email) {
             showAlert('Lütfen tüm alanları doldurunuz.');
             return;
         }
-        
+
         if (!validateBirthDate(dogumTarihi)) {
             showAlert('Geçerli bir doğum tarihi giriniz.');
             return;
         }
-        
+
         if (!validateEmail(email)) {
             showAlert('Geçerli bir e-posta adresi giriniz.');
             return;
         }
-        
+
         setPatientLoading(true);
-        
+
         try {
             const token = getAuthToken();
             const response = await fetch('/api/patients', {
