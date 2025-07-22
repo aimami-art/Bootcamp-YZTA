@@ -110,15 +110,13 @@ function validateBirthDate(dateString) {
     const birthDate = new Date(dateString);
     const today = new Date();
     
-    // Doğum tarihi bugünden ileri olamaz
     if (birthDate > today) {
+        showAlert('Doğum tarihi bugünden ileri olamaz!');
         return false;
     }
     
-    // Doğum tarihi çok eski olamaz (150 yıldan fazla)
-    const maxAge = new Date();
-    maxAge.setFullYear(maxAge.getFullYear() - 150);
-    if (birthDate < maxAge) {
+    if (birthDate < minDate) {
+        showAlert('Doğum tarihi çok eski olamaz!');
         return false;
     }
     

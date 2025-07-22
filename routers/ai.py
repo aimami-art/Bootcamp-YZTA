@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 import sqlite3
 import os
 from models import AIPrompt
@@ -11,16 +11,17 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.schema import BaseMessage, HumanMessage, AIMessage
 
+import speech_recognition as sr
+import tempfile
+import os as os_path
+from pydub import AudioSegment
+import io
+
 load_dotenv()
 
 router = APIRouter()
 
-
 patient_memories = {}
-
-
-from google.cloud import speech
-import io
 
 
 def get_patient_memory(patient_id: int) -> ConversationBufferWindowMemory:
@@ -243,24 +244,48 @@ async def get_memory_status(patient_id: int, current_user: dict = Depends(verify
 
 @router.post("/speech-to-text")
 async def speech_to_text(audio: UploadFile = File(...)):
-    """Google Cloud Speech-to-Text ile ses dosyasını metne çevirir."""
+    """SpeechRecognition kütüphanesi ile ses dosyasını metne çevirir."""
     try:
-        client = speech.SpeechClient()
-        audio_bytes = await audio.read()
-        audio_content = speech.RecognitionAudio(content=audio_bytes)
-        config = speech.RecognitionConfig(
-            encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-            sample_rate_hertz=16000,
-            language_code="tr-TR"
-        )
-        response = client.recognize(config=config, audio=audio_content)
-        transcript = ""
-        for result in response.results:
-            transcript += result.alternatives[0].transcript + " "
-        transcript = transcript.strip()
-        if not transcript:
-            raise HTTPException(status_code=400, detail="Ses tanınamadı veya boş.")
-        return {"transcript": transcript}
+        recognizer = sr.Recognizer()
+        
+        audio_data = await audio.read()
+        
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_file:
+            temp_file.write(audio_data)
+            temp_file_path = temp_file.name
+        
+        try:
+            
+            with sr.AudioFile(temp_file_path) as source:
+                
+                recognizer.adjust_for_ambient_noise(source, duration=0.5)
+                audio_recorded = recognizer.record(source)
+            
+            try:
+                transcript = recognizer.recognize_google(audio_recorded, language='tr-TR')
+                
+                if not transcript or transcript.strip() == "":
+                    raise HTTPException(status_code=400, detail="Ses tanınamadı veya boş ses dosyası.")
+                
+                return {
+                    "transcript": transcript.strip(),
+                    "success": True,
+                    "message": "Ses başarıyla metne çevrildi."
+                }
+                
+            except sr.UnknownValueError:
+                raise HTTPException(status_code=400, detail="Ses anlaşılamadı. Lütfen daha net konuşun veya ses kalitesini artırın.")
+            
+            except sr.RequestError as e:
+                print(f"Google Speech API hatası: {e}")
+                raise HTTPException(status_code=503, detail="Ses tanıma servisi şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin.")
+        
+        finally:
+            if os_path.exists(temp_file_path):
+                os_path.unlink(temp_file_path)
+                
+    except HTTPException:
+        raise
     except Exception as e:
-        print(f"Speech-to-Text hata: {e}")
-        raise HTTPException(status_code=500, detail=f"Speech-to-Text hata: {str(e)}")
+        print(f"Speech-to-Text genel hatası: {e}")
+        raise HTTPException(status_code=500, detail=f"Ses işleme sırasında beklenmeyen bir hata oluştu: {str(e)}")

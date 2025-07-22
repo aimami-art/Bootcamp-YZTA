@@ -150,22 +150,14 @@ function formatText(text) {
     if (!text) return '';
     
     return text
-        // Önce bold ve italic işaretlerini işle
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
         .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        // Çift satır boşlukları paragraf ayırıcı yap
         .replace(/\n{2,}/g, '||PARAGRAPH||')
-        // Tekli satır boşluklarını boşluk yap (cümleleri birleştir)
         .replace(/\n/g, ' ')
-        // Paragraf ayırıcıları geri çevir
         .replace(/\|\|PARAGRAPH\|\|/g, '<br><br>')
-        // "Değerlendirme:" dan sonra satır sonu
         .replace(/Değerlendirme:/g, '<strong>Değerlendirme:</strong><br>')
-        // 1. 2. 3. ifadelerinden önce satır sonu ve kalın yap
         .replace(/(\d+\.\s+)(Olası\s+)/g, '<br><br><strong>$1$2</strong>')
-        // Tanı adından sonra iki nokta üst üste varsa satır sonu
         .replace(/(<strong>.*?<\/strong>):\s/g, '$1:</strong><br>')
-        // Fazla boşlukları ve fazla br'leri temizle
         .replace(/\s{2,}/g, ' ')
         .replace(/(<br>){3,}/g, '<br><br>')
         .trim();

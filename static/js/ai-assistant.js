@@ -81,22 +81,14 @@ function formatAIResponse(response) {
     if (!response) return '';
 
     return response
-        // Önce bold ve italic işaretlerini işle
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
         .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        // Çift satır boşlukları paragraf ayırıcı yap
         .replace(/\n{2,}/g, '||PARAGRAPH||')
-        // Tekli satır boşluklarını boşluk yap (cümleleri birleştir)
         .replace(/\n/g, ' ')
-        // Paragraf ayırıcıları geri çevir
         .replace(/\|\|PARAGRAPH\|\|/g, '<br><br>')
-        // "Değerlendirme:" dan sonra satır sonu
         .replace(/Değerlendirme:/g, '<strong>Değerlendirme:</strong><br>')
-        // 1. 2. 3. ifadelerinden önce satır sonu ve kalın yap
         .replace(/(\d+\.\s+)(Olası\s+)/g, '<br><br><strong>$1$2</strong>')
-        // Tanı adından sonra iki nokta üst üste varsa satır sonu
         .replace(/(<strong>.*?<\/strong>):\s/g, '$1:</strong><br>')
-        // Fazla boşlukları ve fazla br'leri temizle
         .replace(/\s{2,}/g, ' ')
         .replace(/(<br>){3,}/g, '<br><br>')
         .trim();
@@ -251,3 +243,61 @@ if ('webkitSpeechRecognition' in window) {
         showAlert('Tarayıcınızda sesle yazma desteklenmiyor.');
     });
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const audioFileInput = document.getElementById('audioFile');
+    if (audioFileInput) {
+        audioFileInput.addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            if (!file.type.startsWith('audio/')) {
+                showAlert('Lütfen geçerli bir ses dosyası seçin (MP3, WAV, M4A vb.).');
+                this.value = '';
+                return;
+            }
+            
+            if (file.size > 10 * 1024 * 1024) {
+                showAlert('Ses dosyası çok büyük. Lütfen 10MB altında bir dosya seçin.');
+                this.value = '';
+                return;
+            }
+            
+            const uploadBtn = document.getElementById('uploadAudioBtn');
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '⏳ Çevriliyor...';
+            
+            try {
+                const formData = new FormData();
+                formData.append('audio', file);
+                
+                const token = getAuthToken();
+                const response = await fetch('/api/ai/speech-to-text', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    const promptInput = document.getElementById('promptInput');
+                    promptInput.value += (promptInput.value ? ' ' : '') + data.transcript;
+                    promptInput.focus();
+                    showAlert(data.message || 'Ses başarıyla metne çevrildi!', 'success');
+                } else {
+                    showAlert(data.detail || 'Ses çevrilirken hata oluştu.');
+                }
+            } catch (error) {
+                console.error('Speech-to-text upload error:', error);
+                showAlert('Ses dosyası yüklenirken bir hata oluştu. İnternet bağlantınızı kontrol edin.');
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '📁🎤';
+                this.value = ''; // Input'u temizle
+            }
+        });
+    }
+});
