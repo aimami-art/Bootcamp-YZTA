@@ -163,7 +163,7 @@ Sprint 2'de sistem üzerinde önemli iyileştirmeler ve yeni özellikler gelişt
 
 ## Daily Scrum: WhatsApp üzerinden gerçekleştirilmiştir.
 
-
+[Bağlantı metni](https://drive.google.com/drive/folders/1E73AgaLtTcYYkRNrP4ZHfv20VyfhWtTd?usp=sharing)
 
 ## Sprint Board Update
 ![](imagess/Sprint_2_Trello2.png)
@@ -201,25 +201,20 @@ Sprint 2'de sistem üzerinde önemli iyileştirmeler ve yeni özellikler gelişt
    - Daha etkili AI yönlendirme sistemleri
    - Meslek dalına özel prompt optimizasyonları
    - Yanıt kalitesi iyileştirmeleri
-   - Contextual prompt yönetimi
 
 5. **Veritabanı Tablo Güncellemeleri**
    - Hasta tablosu yapısal değişiklikler
    - Yeni alan eklemeleri ve indekslemeler
-   - Performans optimizasyonları
-   - Veri bütünlüğü kontrolleri
 
 6. **Profesyonel Sayfa Tasarımları**
    - Modern ve kullanıcı dostu arayüz tasarımı
    - Gelişmiş UX/UI deneyimi
-   - Responsive tasarım iyileştirmeleri
    - Marka kimliği entegrasyonu
 
 7. **AI Sesli Giriş Sistemi Entegrasyonu**
    - Konuşma tanıma teknolojisi entegrasyonu
    - Sesli komut işleme sistemi
    - Metin-konuşma dönüştürme özelliği
-   - Çok dilli sesli giriş desteği
 
 ## Sprint Retrospective
 
