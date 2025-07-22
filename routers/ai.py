@@ -28,7 +28,7 @@ def get_patient_memory(patient_id: int) -> ConversationBufferWindowMemory:
     """Hasta için memory alır veya oluşturur - sadece mevcut chat oturumu için"""
     if patient_id not in patient_memories:
         patient_memories[patient_id] = ConversationBufferWindowMemory(
-            k=10,  
+            k=4,  
             return_messages=True,
             memory_key="chat_history"
         )
@@ -126,32 +126,33 @@ KURALLAR:
 
 @router.post("/consultation")
 async def ai_konsultasyon(prompt_data: AIPrompt, current_user: dict = Depends(verify_jwt_token)):
+    import time
+    start_time = time.time()
+    
     try:
         
         model = get_ai_model()
         memory = get_patient_memory(prompt_data.hasta_id)
         prompt_template = create_prompt_template_with_memory(prompt_data.meslek_dali.lower())
         
-        
         output_parser = StrOutputParser()
-        
-        
         chain = prompt_template | model | output_parser
         
-        
         chat_history = memory.chat_memory.messages
+        print(f"Chat history uzunluğu: {len(chat_history)} mesaj")
         
-        
+        ai_start = time.time()
         ai_response = chain.invoke({
             "hasta_durumu": prompt_data.prompt,
             "chat_history": chat_history
         })
-        
+        ai_end = time.time()
         
         memory.chat_memory.add_user_message(f"Soru: {prompt_data.prompt}")
         memory.chat_memory.add_ai_message(f"Cevap: {ai_response}")
         
-        print(f"LangChain AI yanıtı (Chat Memory ile): {len(ai_response)} karakter")
+        print(f"AI yanıt süresi: {ai_end - ai_start:.2f} saniye")
+        print(f"LangChain AI yanıtı: {len(ai_response)} karakter")
         print(f"Chat Memory'de {len(memory.chat_memory.messages)} mesaj var")
         
         
