@@ -42,7 +42,8 @@ def get_ai_model():
     return ChatGoogleGenerativeAI(
         model="gemini-1.5-flash",
         google_api_key=GEMINI_API_KEY,
-        temperature=0.1  
+        temperature=0.1,
+        convert_system_message_to_human=True  
     )
 
 def get_examples(specialty):
