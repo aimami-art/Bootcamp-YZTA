@@ -1,5 +1,24 @@
 let currentPatients = [];
 
+// Sayfa yüklendiğinde çalışacak kod
+document.addEventListener('DOMContentLoaded', function() {
+    // Form submit olayını dinle
+    if (document.getElementById('patientForm')) {
+        document.getElementById('patientForm').addEventListener('submit', handlePatientFormSubmit);
+    }
+    
+    // TC kimlik numarası alanı varsa, sadece sayı girişine izin ver
+    if (document.getElementById('patient_tc')) {
+        document.getElementById('patient_tc').addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+            
+            if (this.value.length > 11) {
+                this.value = this.value.slice(0, 11);
+            }
+        });
+    }
+});
+
 function showNewPatientForm() {
     document.getElementById('newPatientForm').style.display = 'block';
     document.getElementById('patientList').style.display = 'none';
@@ -109,6 +128,8 @@ function viewPatientHistory(patientId) {
 function validateBirthDate(dateString) {
     const birthDate = new Date(dateString);
     const today = new Date();
+    const minDate = new Date();
+    minDate.setFullYear(today.getFullYear() - 120); // En fazla 120 yaş
     
     if (birthDate > today) {
         showAlert('Doğum tarihi bugünden ileri olamaz!');
@@ -128,75 +149,87 @@ function validateEmail(email) {
     return emailRegex.test(email);
 }
 
-if (document.getElementById('patientForm')) {
-    document.getElementById('patientForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const ad = document.getElementById('patient_ad').value.trim();
-        const soyad = document.getElementById('patient_soyad').value.trim();
-        const dogumTarihi = document.getElementById('patient_dogum_tarihi').value;
-        const email = document.getElementById('patient_email').value.trim();
-        
-        if (!ad || !soyad || !dogumTarihi || !email) {
-            showAlert('Lütfen tüm alanları doldurunuz.');
-            return;
-        }
-        
-        if (!validateBirthDate(dogumTarihi)) {
-            showAlert('Geçerli bir doğum tarihi giriniz.');
-            return;
-        }
-        
-        if (!validateEmail(email)) {
-            showAlert('Geçerli bir e-posta adresi giriniz.');
-            return;
-        }
-        
-        setPatientLoading(true);
-        
-        try {
-            const token = getAuthToken();
-            const response = await fetch('/api/patients', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    ad: ad,
-                    soyad: soyad,
-                    dogum_tarihi: dogumTarihi,
-                    email: email
-                })
-            });
-            
-            const data = await response.json();
-            
-            if (response.ok) {
-                showAlert('Hasta başarıyla kaydedildi!', 'success');
-                document.getElementById('patientForm').reset();
-                setTimeout(() => {
-                    hideNewPatientForm();
-                    showPatientList();
-                }, 1500);
-            } else {
-                showAlert(data.detail || 'Hasta kaydedilemedi!');
-            }
-        } catch (error) {
-            console.error('Add patient error:', error);
-            showAlert('Bir hata oluştu. Lütfen tekrar deneyiniz.');
-        } finally {
-            setPatientLoading(false);
-        }
-    });
+// Özel showAlert fonksiyonu - auth.js'deki fonksiyon çalışmıyorsa kullanılır
+function showAlert(message, type = 'error') {
+    const alertContainer = document.getElementById('alert-container');
+    if (!alertContainer) {
+        console.error('Alert container bulunamadı!');
+        alert(message);
+        return;
+    }
+    
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type}`;
+    alertDiv.textContent = message;
+    
+    alertContainer.innerHTML = '';
+    alertContainer.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
 }
 
-if (document.getElementById('patient_tc')) {
-    document.getElementById('patient_tc').addEventListener('input', function(e) {
-        this.value = this.value.replace(/[^0-9]/g, '');
+// Form gönderme işlemi
+async function handlePatientFormSubmit(e) {
+    e.preventDefault();
+    console.log('Form gönderiliyor...');
+    
+    const ad = document.getElementById('patient_ad').value.trim();
+    const soyad = document.getElementById('patient_soyad').value.trim();
+    const dogumTarihi = document.getElementById('patient_dogum_tarihi').value;
+    const email = document.getElementById('patient_email').value.trim();
+    
+    if (!ad || !soyad || !dogumTarihi || !email) {
+        showAlert('Lütfen tüm alanları doldurunuz.');
+        return;
+    }
+    
+    if (!validateBirthDate(dogumTarihi)) {
+        return; // validateBirthDate zaten hata mesajını gösterir
+    }
+    
+    if (!validateEmail(email)) {
+        showAlert('Geçerli bir e-posta adresi giriniz.');
+        return;
+    }
+    
+    setPatientLoading(true);
+    
+    try {
+        const token = getAuthToken();
+        console.log('API isteği gönderiliyor...');
         
-        if (this.value.length > 11) {
-            this.value = this.value.slice(0, 11);
+        const response = await fetch('/api/patients', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                ad: ad,
+                soyad: soyad,
+                dogum_tarihi: dogumTarihi,
+                email: email
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showAlert('Hasta başarıyla kaydedildi!', 'success');
+            document.getElementById('patientForm').reset();
+            setTimeout(() => {
+                hideNewPatientForm();
+                showPatientList();
+            }, 1500);
+        } else {
+            showAlert(data.detail || 'Hasta kaydedilemedi!');
         }
-    });
+    } catch (error) {
+        console.error('Add patient error:', error);
+        showAlert('Bir hata oluştu. Lütfen tekrar deneyiniz.');
+    } finally {
+        setPatientLoading(false);
+    }
 } 

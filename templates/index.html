@@ -3,41 +3,411 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yapay Zeka Asistanı - Tıbbi Tanı Sistemi</title>
+    <title>MedIntel - Yapay Zeka Sağlık Asistanı</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background-color: #fff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0;
+            color: #333;
+            text-align: left;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo-container img {
+            height: 120px; /* 60px'den 80px'e yükseltildi */
+            margin-right: 20px; /* 10px'den 15px'e yükseltildi */
+        }
+        
+        .logo-container h1 {
+            font-size: 2.8rem; /* Yazı boyutu büyütüldü */
+            color: #04488c; /* Koyu mavi renk */
+            margin: 0;
+            font-weight: 700;
+        }
+        
+        .logo-container p {
+            color: #04488c;
+            margin: 0;
+            font-size: 1rem;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .hero-section {
+            color: white;
+            text-align: center;
+            padding: 0;
+            position: relative;
+            overflow: hidden;
+            height: 550px;
+            background-color: #c8d7d5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .hero-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            z-index: 1;
+        }
+        
+        .hero-overlay {
+            display: none; /* Overlay'i gizliyoruz */
+        }
+        
+        .hero-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 3;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start; /* Sola hizalama */
+            justify-content: center;
+            width: 100%;
+            text-align: left; /* Yazıyı sola hizala */
+        }
+        
+        .hero-content-text {
+            position: relative;
+            width: 100%;
+            background-color: transparent; /* Arka plan rengini kaldırdım */
+            padding: 30px;
+            max-width: 600px;
+            margin-left: 50px; /* Sol taraftan boşluk */
+        }
+        
+        .hero-content h1 {
+            font-size: 3rem; /* Daha büyük yazı */
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.7); /* Gölgeyi arttırdım */
+            font-family: 'Montserrat', sans-serif; /* Daha modern yazı tipi */
+            font-weight: 700; /* Daha kalın yazı */
+            letter-spacing: 1px; /* Harfler arası boşluk */
+            color: #ffffff; /* Beyaz yazı rengi */
+        }
+        
+        .hero-content p {
+            font-size: 1.3rem; /* Daha büyük paragraf */
+            margin-bottom: 0;
+            font-family: 'Montserrat', sans-serif; /* Daha modern yazı tipi */
+            line-height: 1; /* Satır yüksekliği */
+            text-shadow: 1px 1px 4px rgba(0,0,0,0.7); /* Gölge ekledim */
+            color: #ffffff; /* Beyaz yazı rengi */
+        }
+        
+        .features-section {
+            padding: 60px 20px;
+            background: #fff;
+            text-align: center;
+        }
+        
+        .features-title {
+            margin-bottom: 50px;
+            font-size: 2.2rem;
+            color: #00796b;
+        }
+        
+        .features-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .feature-card {
+            flex: 1;
+            min-width: 250px;
+            max-width: 350px;
+            padding: 30px;
+            border-radius: 10px;
+            background: #f9f9f9;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-10px);
+        }
+        
+        .feature-icon {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 20px;
+        }
+        
+        .feature-card h3 {
+            color: #00796b;
+            margin-bottom: 15px;
+        }
+        
+        .news-section {
+            padding: 60px 20px;
+            background: #f5f5f5;
+        }
+        
+        .news-title {
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 2.2rem;
+            color: #00796b;
+        }
+        
+        .news-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .news-card {
+            flex: 1;
+            min-width: 300px;
+            background: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .news-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        
+        .news-content {
+            padding: 20px;
+        }
+        
+        .news-content h3 {
+            color: #00796b;
+            margin-bottom: 10px;
+        }
+        
+        .news-content p {
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 50px;
+            background: #009688;
+            color: white;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        
+        .btn:hover {
+            background: #00796b;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,150,136,0.4);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #009688;
+            color: #009688;
+        }
+        
+        .btn-outline:hover {
+            background: #009688;
+            color: white;
+        }
+        
+        .announcement-banner {
+            background: #f1f8e9;
+            border: 1px solid #c5e1a5;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 40px auto;
+            max-width: 1000px;
+            text-align: center;
+        }
+        
+        .announcement-title {
+            color: #33691e;
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+        }
+        
+        .announcement-content {
+            color: #558b2f;
+        }
+        
+        .footer {
+            background: #00796b;
+            color: white;
+            text-align: center;
+            padding: 30px 20px;
+            margin-top: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                padding: 20px;
+            }
+            
+            .nav-buttons {
+                margin-top: 20px;
+            }
+            
+            .hero-section {
+                height: 400px; /* Mobilde biraz daha yüksek */
+            }
+            
+            .hero-content-text {
+                padding: 20px;
+                margin-left: 20px; /* Mobilde daha az boşluk */
+            }
+            
+            .hero-content h1 {
+                font-size: 2rem;
+            }
+            
+            .hero-content p {
+                font-size: 1.1rem;
+            }
+            
+            .features-container, .news-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .feature-card, .news-card {
+                width: 100%;
+                max-width: 400px;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <header class="header">
-            <h1>🏥 Yapay Zeka Asistanı</h1>
-            <p class="subtitle">Tıbbi Tanı ve Müdahale Sistemi</p>
-        </header>
-        
-        <main class="main-content">
-            <div class="welcome-section">
-                <h2>Hoş Geldiniz</h2>
-                <p>Bu platform, doktor ve tıp öğrencilerine yönelik AI destekli tanı ve müdahale önerileri sunmaktadır.</p>
-                
-                <div class="specialties">
-                    <div class="specialty-card">
-                        <h3>🧠 Nöroloji</h3>
-                        <p>Sinir sistemi hastalıkları için uzmanlaşmış AI desteği</p>
-                    </div>
-                    <div class="specialty-card">
-                        <h3>🔬 Dermatoloji</h3>
-                        <p>Cilt hastalıkları için uzmanlaşmış AI desteği</p>
-                    </div>
-                </div>
-                
-                <div class="auth-buttons">
-                    <a href="/login" class="btn btn-primary">Giriş Yap</a>
-                    <a href="/register" class="btn btn-secondary">Kayıt Ol</a>
+            <div class="logo-container">
+                <img src="/static/imagess/MedIntelSmall.png" alt="MedIntel Logo">
+                <div>
+                    <h1>MedIntel</h1>
+                    <p>An AI Healthcare Assistant</p>
                 </div>
             </div>
-        </main>
+            <div class="nav-buttons">
+                <a href="/login" class="btn">GİRİŞ</a>
+                <a href="/register" class="btn btn-outline">KAYIT OL</a>
+            </div>
+        </header>
+        
+        <section class="hero-section">
+            <img src="/static/imagess/photo5.1.png" alt="Medical Technology" class="hero-image">
+            <div class="hero-content">
+                <div class="hero-content-text">
+                    <h1>Modern Tıbbın Yeni Ekip Arkadaşı</h1>
+                    <p>Hastaları analiz eder, geçmişi kayıt eder, sizi yormadan destek olur.</p>
+                </div>
+            </div>
+        </section>
+        
+        <section class="features-section">
+            <div class="features-container">
+                <div class="feature-card">
+                    <img src="/static/imagess/photo7.svg" alt="Zaman Tasarrufu" class="feature-icon">
+                    <h3>⏰ Zamanınız size kalsın.</h3>
+                    <p>Şikayetleri otomatik analiz eden sistem ile hasta başı sürelerini azaltın.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <img src="/static/imagess/photo9.svg" alt="Dijital Stetoskop" class="feature-icon">
+                    <h3>🩺 Dijital stetoskop artık cebinizde.</h3>
+                    <p>Sesi analiz eder, verileri yorumlar, geçmişe dayalı öneriler sunar.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <img src="/static/imagess/photo8.svg" alt="AI Destekli Klinik" class="feature-icon">
+                    <h3>🤖 AI destekli klinik asistan.</h3>
+                    <p>Şikayetleri dinler, not tutar, geçmiş verileri analiz eder.</p>
+                </div>
+            </div>
+        </section>
+        
+        <div class="announcement-banner">
+            <h3 class="announcement-title">DUYURULAR</h3>
+            <p class="announcement-content">
+                📌 Beta sürümümüzde hasta sesiyle otomatik not alma aktif edilmiştir. Deneyin, görüşlerinizi iletin!<br>
+                📌 Geliştirme aşamasındayız. Her geri bildirim bizim için altın değerinde.
+            </p>
+        </div>
+        
+        <section class="news-section">
+            <h2 class="news-title">HABERLER</h2>
+            <div class="news-container">
+                <div class="news-card">
+                    <img src="/static/imagess/photo6.jpg" alt="Yapay Zeka Haberi" class="news-image">
+                    <div class="news-content">
+                        <h3>Yapay Zekâ, Erken Parkinson Tanısında %90 Başarı Elde Etti!</h3>
+                        <p>Yeni yapılan araştırmalara göre yapay zekâ destekli görüntüleme sistemleri, Parkinson hastalığını erken evrede tespit etmede %90'a varan doğruluk sağladı.</p>
+                    </div>
+                </div>
+                
+                <div class="news-card">
+                    <img src="/static/imagess/photo6.jpg" alt="Migren Haberi" class="news-image">
+                    <div class="news-content">
+                        <h3>Migren Ataklarını Önceden Tespit Eden Kulak İçi Sensörler Geliştirildi!</h3>
+                        <p>Harvard Üniversitesi'nde geliştirilen yeni biyosensörler, migren ataklarını başlamadan önce tespit ederek erken müdahale şansı sunuyor.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
         
         <footer class="footer">
-            <p>&copy; 2024 Yapay Zeka Asistanı - Tıbbi Tanı Sistemi</p>
+            <p>NextGen Healers tarafından geliştirilmiştir.</p>
+            <p>&copy; 2025 Tüm Hakları Saklıdır.</p>
         </footer>
     </div>
 </body>

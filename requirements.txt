@@ -12,4 +12,5 @@ langchain-google-genai==0.0.11
 langchain-core==0.1.23
 SpeechRecognition==3.10.0
 pydub==0.25.1
+requests==2.31.0
 # python için 3.8 veya üstü gereklidir

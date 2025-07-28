@@ -73,9 +73,27 @@ body {
 /* Specialty Cards */
 .specialties {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 20px;
     margin: 30px 0;
+}
+
+@media (min-width: 992px) {
+    .specialties {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (min-width: 1200px) {
+    .specialties {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .specialties {
+        grid-template-columns: 1fr;
+    }
 }
 
 .specialty-card {
@@ -199,9 +217,33 @@ body {
 /* Specialty Selection */
 .specialty-selection {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 20px;
     margin: 30px 0;
+}
+
+@media (min-width: 992px) {
+    .specialty-selection {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1200px) {
+    .specialty-selection {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (min-width: 1600px) {
+    .specialty-selection {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .specialty-selection {
+        grid-template-columns: 1fr;
+    }
 }
 
 .specialty-option {
@@ -592,4 +634,54 @@ body {
 .patient-actions .btn {
     flex: 1;
     min-width: 120px;
+} 
+
+/* Google ile giriş butonu stilleri */
+.social-login {
+    margin: 20px 0;
+    text-align: center;
+}
+
+.social-login p {
+    margin: 15px 0;
+    color: #666;
+    position: relative;
+}
+
+.social-login p::before,
+.social-login p::after {
+    content: "";
+    display: inline-block;
+    height: 1px;
+    width: 100px;
+    background: #ddd;
+    position: absolute;
+    top: 50%;
+}
+
+.social-login p::before {
+    left: 0;
+}
+
+.social-login p::after {
+    right: 0;
+}
+
+.btn-google {
+    background-color: #fff;
+    color: #444;
+    border: 1px solid #ddd;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    transition: all 0.3s ease;
+    width: 100%;
+    max-width: 250px;
+}
+
+.btn-google:hover {
+    background-color: #f8f8f8;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 } 

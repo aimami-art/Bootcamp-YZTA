@@ -4,6 +4,11 @@ let currentSpecialty = null;
 
 document.addEventListener('DOMContentLoaded', function() {
     initializeAIAssistant();
+    
+    // Örnek soruları eklemek için biraz gecikme ekleyelim
+    setTimeout(function() {
+        addSamplePrompts();
+    }, 1000);
 });
 
 function initializeAIAssistant() {
@@ -26,15 +31,56 @@ function initializeAIAssistant() {
 }
 
 function addSpecialtyMessage() {
-    const specialtyText = currentSpecialty === 'noroloji' ? 
-        'Nöroloji uzmanı olarak çalışıyorum. Sinir sistemi, beyin ve omurilik ile ilgili sorunları değerlendireceğim.' :
-        'Dermatoloji uzmanı olarak çalışıyorum. Cilt hastalıkları ve deri sorunlarını değerlendireceğim.';
+    let specialtyText = '';
+    let specialtyEmoji = '';
+    
+    switch(currentSpecialty) {
+        case 'noroloji':
+            specialtyText = 'Nöroloji uzmanı olarak çalışıyorum. Sinir sistemi, beyin ve omurilik ile ilgili sorunları değerlendireceğim.';
+            specialtyEmoji = '🧠';
+            break;
+        case 'dermatoloji':
+            specialtyText = 'Dermatoloji uzmanı olarak çalışıyorum. Cilt hastalıkları ve dermatolojik sorunları değerlendireceğim.';
+            specialtyEmoji = '🔬';
+            break;
+        case 'kardiyoloji':
+            specialtyText = 'Kardiyoloji uzmanı olarak çalışıyorum. Kalp ve damar hastalıkları ile ilgili sorunları değerlendireceğim.';
+            specialtyEmoji = '❤️';
+            break;
+        case 'pediatri':
+            specialtyText = 'Pediatri uzmanı olarak çalışıyorum. Çocuk sağlığı ve hastalıkları ile ilgili sorunları değerlendireceğim.';
+            specialtyEmoji = '👶';
+            break;
+        case 'kbb':
+            specialtyText = 'Kulak Burun Boğaz uzmanı olarak çalışıyorum. KBB ve baş-boyun bölgesi ile ilgili sorunları değerlendireceğim.';
+            specialtyEmoji = '👂';
+            break;
+        case 'dahiliye':
+            specialtyText = 'Dahiliye uzmanı olarak çalışıyorum. İç hastalıkları ve genel sağlık sorunlarını değerlendireceğim.';
+            specialtyEmoji = '🩺';
+            break;
+        case 'endokrinoloji':
+            specialtyText = 'Endokrinoloji uzmanı olarak çalışıyorum. Hormon bozuklukları ve metabolik hastalıklar ile ilgili sorunları değerlendireceğim.';
+            specialtyEmoji = '⚗️';
+            break;
+        case 'ortopedi':
+            specialtyText = 'Ortopedi uzmanı olarak çalışıyorum. Kemik, eklem ve kas-iskelet sistemi hastalıkları ile ilgili sorunları değerlendireceğim.';
+            specialtyEmoji = '🦴';
+            break;
+        case 'psikoloji':
+            specialtyText = 'Psikoloji/Psikiyatri uzmanı olarak çalışıyorum. Ruhsal ve davranışsal sorunlar ile ilgili değerlendirme yapacağım.';
+            specialtyEmoji = '🧩';
+            break;
+        default:
+            specialtyText = `${currentSpecialty.charAt(0).toUpperCase() + currentSpecialty.slice(1)} uzmanı olarak çalışıyorum.`;
+            specialtyEmoji = '🏥';
+    }
     
     const chatContainer = document.getElementById('chatContainer');
     const specialtyMessage = document.createElement('div');
     specialtyMessage.className = 'message ai';
     specialtyMessage.innerHTML = `
-        <div class="message-header">🏥 ${currentSpecialty.charAt(0).toUpperCase() + currentSpecialty.slice(1)} Uzmanı</div>
+        <div class="message-header">${specialtyEmoji} ${currentSpecialty.charAt(0).toUpperCase() + currentSpecialty.slice(1)} Uzmanı</div>
         <div class="message-content">${specialtyText}</div>
     `;
     
@@ -156,23 +202,86 @@ document.getElementById('promptInput').addEventListener('input', function() {
     this.style.height = Math.min(this.scrollHeight, 200) + 'px';
 });
 
+// Örnek sorular fonksiyonu
 function addSamplePrompts() {
-    const samplePrompts = {
-        'noroloji': [
-            'Hasta baş ağrısı ve görme bulanıklığı şikayeti ile geldi.',
-            'Hastada tremor ve yürüme güçlüğü gözleniyor.',
-            'Hasta uyuşma ve karıncalanma hissi yaşıyor.'
-        ],
-        'dermatoloji': [
-            'Hastada kızarık ve kaşıntılı döküntü var.',
-            'Ciltte renk değişikliği ve leke oluşumu gözleniyor.',
-            'Hasta saç dökülmesi problemi yaşıyor.'
-        ]
-    };
+    const samplePromptsContainer = document.getElementById('sample-prompts');
+    samplePromptsContainer.innerHTML = '';
     
-    const samples = samplePrompts[currentSpecialty] || [];
+    let samplePrompts = [];
     
-    if (samples.length > 0) {
+    switch(currentSpecialty) {
+        case 'noroloji':
+            samplePrompts = [
+                'Baş ağrısı, bulantı ve ışığa hassasiyet şikayeti olan 35 yaşında kadın hasta',
+                '60 yaşında erkek hasta, son 6 aydır artan titreme ve yavaşlık şikayeti var',
+                'Ani başlayan konuşma güçlüğü ve sağ tarafta güçsüzlük olan 70 yaşında hasta'
+            ];
+            break;
+        case 'dermatoloji':
+            samplePrompts = [
+                'Yüzde kızarıklık, pullanma ve kaşıntı şikayeti olan 25 yaşında hasta',
+                'Vücutta yaygın kaşıntılı döküntüler olan 40 yaşında hasta',
+                'El ve ayak parmaklarında şişlik, kızarıklık ve ağrı olan 50 yaşında hasta'
+            ];
+            break;
+        case 'kardiyoloji':
+            samplePrompts = [
+                'Merdiven çıkarken nefes darlığı ve göğüs ağrısı olan 55 yaşında hasta',
+                'Düzensiz kalp atışları ve çarpıntı şikayeti olan 45 yaşında hasta',
+                'Ayaklarda şişlik ve egzersiz intoleransı olan 60 yaşında hasta'
+            ];
+            break;
+        case 'pediatri':
+            samplePrompts = [
+                '3 yaşında çocuk, 3 gündür devam eden yüksek ateş ve döküntü şikayeti var',
+                '8 aylık bebek, beslenme güçlüğü ve kilo alamama sorunu yaşıyor',
+                '12 yaşında çocuk, karın ağrısı ve ishal şikayeti ile başvurdu'
+            ];
+            break;
+        case 'kbb':
+            samplePrompts = [
+                'Kulakta ağrı, dolgunluk hissi ve işitme azalması olan 30 yaşında hasta',
+                'Burun tıkanıklığı, geniz akıntısı ve baş ağrısı şikayeti olan 40 yaşında hasta',
+                'Boğaz ağrısı, yutma güçlüğü ve ses kısıklığı olan 35 yaşında hasta'
+            ];
+            break;
+        case 'dahiliye':
+            samplePrompts = [
+                'Halsizlik, yorgunluk ve kilo kaybı şikayeti olan 50 yaşında hasta',
+                'Karın ağrısı, bulantı ve iştahsızlık şikayeti olan 45 yaşında hasta',
+                'Eklem ağrıları, ateş ve döküntü şikayeti olan 35 yaşında hasta'
+            ];
+            break;
+        case 'endokrinoloji':
+            samplePrompts = [
+                'Sürekli susama, sık idrara çıkma ve kilo kaybı şikayeti olan 40 yaşında hasta',
+                'Boyun bölgesinde şişlik ve yutma güçlüğü olan 45 yaşında hasta',
+                'Aşırı terleme, çarpıntı ve kilo kaybı şikayeti olan 35 yaşında hasta'
+            ];
+            break;
+        case 'ortopedi':
+            samplePrompts = [
+                'Diz ağrısı, şişlik ve hareket kısıtlılığı olan 50 yaşında hasta',
+                'Bel ağrısı ve bacağa yayılan ağrı şikayeti olan 45 yaşında hasta',
+                'Omuz ağrısı ve kol kaldırma güçlüğü olan 55 yaşında hasta'
+            ];
+            break;
+        case 'psikoloji':
+            samplePrompts = [
+                'Sürekli endişe, gerginlik ve uyku sorunları yaşayan 30 yaşında hasta',
+                'Uzun süredir devam eden mutsuzluk, isteksizlik ve enerji kaybı olan 35 yaşında hasta',
+                'Sosyal ortamlarda aşırı kaygı ve panik atak yaşayan 25 yaşında hasta'
+            ];
+            break;
+        default:
+            samplePrompts = [
+                'Örnek soru 1',
+                'Örnek soru 2',
+                'Örnek soru 3'
+            ];
+    }
+    
+    if (samplePrompts.length > 0) {
         const chatContainer = document.getElementById('chatContainer');
         const samplesDiv = document.createElement('div');
         samplesDiv.className = 'message ai';
@@ -180,7 +289,7 @@ function addSamplePrompts() {
             <div class="message-header">💡 Örnek Sorular</div>
             <div class="message-content">
                 <p>İşte ${currentSpecialty} alanında sık karşılaşılan durumlar:</p>
-                ${samples.map(sample => `
+                ${samplePrompts.map(sample => `
                     <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 5px; cursor: pointer; border: 1px solid #e9ecef;" 
                          onclick="document.getElementById('promptInput').value = '${sample}'; document.getElementById('promptInput').focus();">
                         "${sample}"
@@ -193,8 +302,6 @@ function addSamplePrompts() {
         scrollToBottom();
     }
 }
-
-setTimeout(addSamplePrompts, 1000); 
 
 
 let recognizing = false;

@@ -167,4 +167,19 @@ function autoRedirect() {
 document.addEventListener('DOMContentLoaded', () => {
     autoRedirect();
     checkAuth();
+    
+    // Google ile giriş butonu işlevselliği
+    const googleLoginBtn = document.getElementById('googleLoginBtn');
+    if (googleLoginBtn) {
+        console.log("Google login button found");
+        
+        googleLoginBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log("Google login button clicked");
+            showAlert("Google ile giriş başlatılıyor...", "info");
+            
+            // Doğrudan URL'ye git (fetch kullanmadan)
+            window.location.href = '/api/auth/google/url';
+        });
+    }
 }); 
