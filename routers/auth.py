@@ -7,8 +7,11 @@ import jwt
 import os
 import secrets
 import requests
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta
-from models import UserRegister, UserLogin
+from models import UserRegister, UserLogin, ForgotPassword, ResetPassword
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -23,6 +26,13 @@ JWT_EXPIRATION_HOURS = 24
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/api/auth/google/callback")
+
+# Email ayarları
+SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+SMTP_USERNAME = os.getenv("SMTP_USERNAME")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+FROM_EMAIL = os.getenv("FROM_EMAIL", SMTP_USERNAME)
 
 security = HTTPBearer()
 
@@ -40,6 +50,25 @@ def create_jwt_token(user_id: int, email: str) -> str:
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
+def create_reset_token(email: str) -> str:
+    payload = {
+        "email": email,
+        "type": "password_reset",
+        "exp": datetime.utcnow() + timedelta(hours=1)  # 1 saat geçerli
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+def verify_reset_token(token: str) -> dict:
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        if payload.get("type") != "password_reset":
+            raise HTTPException(status_code=400, detail="Geçersiz token türü")
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=400, detail="Token süresi dolmuş")
+    except jwt.JWTError:
+        raise HTTPException(status_code=400, detail="Geçersiz token")
+
 def verify_jwt_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     try:
         payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=[JWT_ALGORITHM])
@@ -48,6 +77,50 @@ def verify_jwt_token(credentials: HTTPAuthorizationCredentials = Depends(securit
         raise HTTPException(status_code=401, detail="Token süresi dolmuş")
     except jwt.JWTError:
         raise HTTPException(status_code=401, detail="Geçersiz token")
+
+def send_reset_email(email: str, reset_token: str):
+    """Şifre sıfırlama e-postası gönder"""
+    try:
+        # E-posta içeriği
+        reset_url = f"http://localhost:8000/reset-password?token={reset_token}"
+        
+        subject = "MedIntel - Şifre Sıfırlama"
+        body = f"""
+        Merhaba,
+        
+        MedIntel hesabınız için şifre sıfırlama talebinde bulundunuz.
+        
+        Şifrenizi sıfırlamak için aşağıdaki bağlantıya tıklayın:
+        {reset_url}
+        
+        Bu bağlantı 1 saat süreyle geçerlidir.
+        
+        Eğer bu talebi siz yapmadıysanız, bu e-postayı görmezden gelebilirsiniz.
+        
+        Saygılarımızla,
+        MedIntel Ekibi
+        """
+        
+        # E-posta oluştur
+        msg = MIMEMultipart()
+        msg['From'] = FROM_EMAIL
+        msg['To'] = email
+        msg['Subject'] = subject
+        
+        msg.attach(MIMEText(body, 'plain', 'utf-8'))
+        
+        # E-postayı gönder
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()
+        server.login(SMTP_USERNAME, SMTP_PASSWORD)
+        text = msg.as_string()
+        server.sendmail(FROM_EMAIL, email, text)
+        server.quit()
+        
+        return True
+    except Exception as e:
+        print(f"E-posta gönderme hatası: {str(e)}")
+        return False
 
 @router.post("/register")
 async def kullanici_kayit(user: UserRegister):
@@ -178,4 +251,54 @@ async def google_auth_callback(code: str, state: str, request: Request):
         raise HTTPException(status_code=400, detail=f"Google API hatası: {str(e)}")
     except Exception as e:
         print(f"Beklenmeyen hata: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/forgot-password")
+async def forgot_password(request: ForgotPassword):
+    """Şifre sıfırlama e-postası gönder"""
+    try:
+        with sqlite3.connect('medical_ai.db') as conn:
+            # Kullanıcının var olup olmadığını kontrol et
+            result = conn.execute("SELECT id FROM kullanicilar WHERE email = ?", (request.email,)).fetchone()
+            
+            if not result:
+                # Güvenlik için kullanıcı var olmasa bile başarılı mesajı döndür
+                return {"message": "Şifre sıfırlama bağlantısı gönderildi"}
+            
+            # Reset token oluştur
+            reset_token = create_reset_token(request.email)
+            
+            # E-posta gönder
+            if send_reset_email(request.email, reset_token):
+                return {"message": "Şifre sıfırlama bağlantısı gönderildi"}
+            else:
+                raise HTTPException(status_code=500, detail="E-posta gönderilemedi")
+                
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/reset-password")
+async def reset_password(request: ResetPassword):
+    """Şifreyi sıfırla"""
+    try:
+        # Token'ı doğrula
+        payload = verify_reset_token(request.token)
+        email = payload.get("email")
+        
+        if not email:
+            raise HTTPException(status_code=400, detail="Geçersiz token")
+        
+        # Şifreyi güncelle
+        with sqlite3.connect('medical_ai.db') as conn:
+            hashed_password = hash_password(request.password)
+            conn.execute("UPDATE kullanicilar SET sifre_hash = ? WHERE email = ?", 
+                        (hashed_password, email))
+            
+            return {"message": "Şifre başarıyla güncellendi"}
+            
+    except HTTPException:
+        raise
+    except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) 

@@ -17,6 +17,14 @@ async def kayit_sayfasi(request: Request):
 async def giris_sayfasi(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
 
+@router.get("/forgot-password", response_class=HTMLResponse)
+async def sifremi_unuttum(request: Request):
+    return templates.TemplateResponse("forgot-password.html", {"request": request})
+
+@router.get("/reset-password", response_class=HTMLResponse)
+async def sifre_sifirlama(request: Request):
+    return templates.TemplateResponse("reset-password.html", {"request": request})
+
 @router.get("/specialty", response_class=HTMLResponse)
 async def meslek_secimi(request: Request):
     return templates.TemplateResponse("specialty.html", {"request": request})

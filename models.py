@@ -11,6 +11,13 @@ class UserLogin(BaseModel):
     email: str
     sifre: str
 
+class ForgotPassword(BaseModel):
+    email: str
+
+class ResetPassword(BaseModel):
+    token: str
+    password: str
+
 class PatientCreate(BaseModel):
     ad: str
     soyad: str

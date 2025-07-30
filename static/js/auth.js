@@ -57,7 +57,7 @@ if (document.getElementById('loginForm')) {
         setLoading('loginBtn', true);
         
         try {
-            const response = await fetch('/api/login', {
+            const response = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -110,7 +110,7 @@ if (document.getElementById('registerForm')) {
         setLoading('registerBtn', true);
         
         try {
-            const response = await fetch('/api/register', {
+            const response = await fetch('/api/auth/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

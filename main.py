@@ -18,7 +18,7 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.include_router(pages.router, tags=["Pages"])
-app.include_router(auth.router, prefix="/api", tags=["Authentication"])
+app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(patients.router, prefix="/api/patients", tags=["Patients"])
 app.include_router(ai.router, prefix="/api/ai", tags=["AI"])
 
