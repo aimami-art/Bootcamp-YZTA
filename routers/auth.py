@@ -11,7 +11,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta
-from models import UserRegister, UserLogin, ForgotPassword, ResetPassword
+from models import UserRegister, UserLogin, ForgotPassword, ResetPassword, ChangePassword
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -297,6 +297,44 @@ async def reset_password(request: ResetPassword):
                         (hashed_password, email))
             
             return {"message": "Şifre başarıyla güncellendi"}
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/change-password")
+async def change_password(request: ChangePassword, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Kullanıcı şifresini değiştir"""
+    try:
+        # Token'dan kullanıcı bilgilerini al
+        payload = verify_jwt_token(credentials)
+        user_id = payload.get("user_id")
+        email = payload.get("email")
+        
+        if not user_id or not email:
+            raise HTTPException(status_code=400, detail="Geçersiz token")
+        
+        # Mevcut şifreyi doğrula
+        with sqlite3.connect('medical_ai.db') as conn:
+            result = conn.execute("SELECT sifre_hash FROM kullanicilar WHERE id = ? AND email = ?", 
+                                (user_id, email)).fetchone()
+            
+            if not result:
+                raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+            
+            current_hash = result[0]
+            
+            # Mevcut şifreyi kontrol et
+            if not verify_password(request.current_password, current_hash):
+                raise HTTPException(status_code=400, detail="Mevcut şifre hatalı")
+            
+            # Yeni şifreyi hash'le ve güncelle
+            new_hash = hash_password(request.new_password)
+            conn.execute("UPDATE kullanicilar SET sifre_hash = ? WHERE id = ?", 
+                        (new_hash, user_id))
+            
+            return {"message": "Şifre başarıyla değiştirildi"}
             
     except HTTPException:
         raise

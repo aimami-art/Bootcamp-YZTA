@@ -18,6 +18,10 @@ class ResetPassword(BaseModel):
     token: str
     password: str
 
+class ChangePassword(BaseModel):
+    current_password: str
+    new_password: str
+
 class PatientCreate(BaseModel):
     ad: str
     soyad: str

@@ -25,6 +25,10 @@ async def sifremi_unuttum(request: Request):
 async def sifre_sifirlama(request: Request):
     return templates.TemplateResponse("reset-password.html", {"request": request})
 
+@router.get("/change-password", response_class=HTMLResponse)
+async def sifre_degistir(request: Request):
+    return templates.TemplateResponse("change-password.html", {"request": request})
+
 @router.get("/specialty", response_class=HTMLResponse)
 async def meslek_secimi(request: Request):
     return templates.TemplateResponse("specialty.html", {"request": request})

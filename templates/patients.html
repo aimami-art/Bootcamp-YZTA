@@ -11,7 +11,22 @@
         <header class="header">
             <h1>🏥 Yapay Zeka Asistanı</h1>
             <p class="subtitle">Hasta Yönetimi</p>
-            <button onclick="logout()" class="btn btn-secondary" style="position: absolute; top: 20px; right: 20px;">Çıkış</button>
+            <div class="header-actions">
+                <div class="account-menu">
+                    <button class="account-menu-btn" onclick="toggleAccountMenu()" id="userAvatar">
+                        U
+                    </button>
+                    <div class="account-dropdown" id="accountDropdown">
+                        <div class="account-dropdown-menu">
+                            <button class="account-dropdown-item" onclick="showChangePassword()">
+                                <span class="icon">🔒</span>
+                                Şifre Değiştir
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-secondary" onclick="logout()">Çıkış</button>
+            </div>
         </header>
         
         <div id="alert-container" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; width: 80%; max-width: 500px;"></div>
@@ -91,5 +106,70 @@
     
     <script src="/static/js/auth.js?v=1.3"></script>
     <script src="/static/js/patients.js?v=1.4"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Kullanıcı bilgilerini yükle
+            loadUserInfo();
+        });
+        
+        // Hesap menüsü fonksiyonları
+        function toggleAccountMenu() {
+            const dropdown = document.getElementById('accountDropdown');
+            const button = document.querySelector('.account-menu-btn');
+            
+            dropdown.classList.toggle('show');
+            button.classList.toggle('active');
+        }
+        
+        // Menü dışına tıklandığında menüyü kapat
+        document.addEventListener('click', function(event) {
+            const accountMenu = document.querySelector('.account-menu');
+            const dropdown = document.getElementById('accountDropdown');
+            const button = document.querySelector('.account-menu-btn');
+            
+            if (!accountMenu.contains(event.target)) {
+                dropdown.classList.remove('show');
+                button.classList.remove('active');
+            }
+        });
+        
+        // Kullanıcı bilgilerini yükle
+        async function loadUserInfo() {
+            try {
+                const token = localStorage.getItem('authToken');
+                if (!token) return;
+                
+                // Token'dan kullanıcı bilgilerini çöz
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                const userEmail = payload.email;
+                
+                // Kullanıcı adını email'den çıkar
+                const userName = userEmail.split('@')[0];
+                
+                // Avatar butonunu güncelle - kullanıcı adının ilk harfini göster
+                const userAvatar = document.getElementById('userAvatar');
+                userAvatar.textContent = userName.charAt(0).toUpperCase();
+                
+            } catch (error) {
+                console.error('Kullanıcı bilgileri yüklenemedi:', error);
+            }
+        }
+        
+        // Şifre değiştir
+        function showChangePassword() {
+            window.location.href = '/change-password';
+            toggleAccountMenu();
+        }
+        
+        // Çıkış yap
+        function logout() {
+            if (confirm('Çıkış yapmak istediğinizden emin misiniz?')) {
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('userId');
+                localStorage.removeItem('selectedSpecialty');
+                window.location.href = '/';
+            }
+        }
+    </script>
 </body>
 </html> 

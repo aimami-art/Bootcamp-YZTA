@@ -27,6 +27,7 @@ body {
     text-align: center;
     margin-bottom: 40px;
     color: white;
+    position: relative;
 }
 
 .header h1 {
@@ -684,4 +685,163 @@ body {
 .btn-google:hover {
     background-color: #f8f8f8;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+} 
+
+/* Hesap Ayarları Menüsü */
+.account-menu {
+    position: relative;
+    display: inline-block;
+}
+
+.account-menu-btn {
+    background: #009688;
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+}
+
+.account-menu-btn:hover {
+    background: #00796b;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.account-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    min-width: 180px;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px);
+    transition: all 0.3s ease;
+    margin-top: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+.account-dropdown.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.account-dropdown-header {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    background: #f8f9fa;
+    border-radius: 10px 10px 0 0;
+}
+
+.account-dropdown-header h4 {
+    margin: 0;
+    color: #333;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.account-dropdown-header p {
+    margin: 5px 0 0 0;
+    color: #666;
+    font-size: 12px;
+}
+
+.account-dropdown-menu {
+    padding: 8px 0;
+}
+
+.account-dropdown-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    color: #333;
+    text-decoration: none;
+    transition: background 0.2s ease;
+    font-size: 14px;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+}
+
+.account-dropdown-item:hover {
+    background: #f5f5f5;
+    color: #009688;
+}
+
+.account-dropdown-item .icon {
+    margin-right: 12px;
+    font-size: 16px;
+    width: 20px;
+    text-align: center;
+}
+
+.account-dropdown-divider {
+    height: 1px;
+    background: #eee;
+    margin: 5px 0;
+}
+
+.logout-btn {
+    color: #dc3545 !important;
+}
+
+.logout-btn:hover {
+    background: #fff5f5 !important;
+    color: #dc3545 !important;
+}
+
+/* Header'da hesap menüsü için düzenleme */
+.header-actions {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.header-actions .btn {
+    padding: 10px 20px;
+    font-size: 15px;
+    border-radius: 20px;
+}
+
+.header-actions .btn-secondary {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.header-actions .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Responsive tasarım */
+@media (max-width: 768px) {
+    .account-dropdown {
+        right: -20px;
+        min-width: 160px;
+    }
+    
+    .header-actions {
+        position: static;
+        margin-top: 15px;
+        justify-content: center;
+    }
 } 
