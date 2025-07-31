@@ -66,6 +66,8 @@ function displayPatientInfo() {
     document.getElementById('patientDate').textContent = formatDate(currentPatientData.kayit_tarihi);
 }
 
+let consultationHistory = [];
+
 async function displayPatientHistory() {
     const historyContainer = document.getElementById('historyContainer');
     
@@ -88,38 +90,12 @@ async function displayPatientHistory() {
         if (response.ok) {
             const data = await response.json();
             console.log('API Response:', data);
-            const history = data.history || [];
-            console.log('History length:', history.length);
+            consultationHistory = data.history || [];
+            console.log('History length:', consultationHistory.length);
             
-            if (history.length > 0) {
-                let historyHtml = '';
-                
-                history.forEach((consultation, index) => {
-                    historyHtml += `
-                        <div class="history-dialog" style="margin-bottom: 20px; border: 1px solid #ddd; padding: 15px; border-radius: 8px;">
-                            <div class="consultation-header">
-                                <h4>🩺 Konsültasyon ${history.length - index}</h4>
-                                <small>Uzmanlık: ${consultation.meslek_dali} | Tarih: ${formatDate(consultation.tarih)}</small>
-                            </div>
-                            
-                            <div class="question-section" style="margin: 15px 0;">
-                                <h5>❓ Sorulan Soru</h5>
-                                <div class="question-content" style="background: #f8f9fa; padding: 10px; border-radius: 4px;">
-                                    ${formatText(consultation.soru)}
-                                </div>
-                            </div>
-                            
-                            <div class="answer-section" style="margin: 15px 0;">
-                                <h5>🤖 AI Yanıtı</h5>
-                                <div class="answer-content" style="background: #e3f2fd; padding: 10px; border-radius: 4px;">
-                                    ${formatText(consultation.cevap)}
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-                
-                historyContainer.innerHTML = historyHtml;
+            if (consultationHistory.length > 0) {
+                populateQuestionSelector();
+                hideHistoryContainer();
             } else {
                 historyContainer.innerHTML = `
                     <div class="no-history">
@@ -145,6 +121,100 @@ async function displayPatientHistory() {
         `;
     }
 }
+
+function populateQuestionSelector() {
+    console.log('populateQuestionSelector çağrıldı');
+    const questionSelect = document.getElementById('questionSelect');
+    const questionSelectorContainer = document.getElementById('questionSelectorContainer');
+    
+    if (!questionSelect || !questionSelectorContainer) {
+        console.error('Soru seçici elementler bulunamadı');
+        return;
+    }
+    
+    // Select'i temizle
+    questionSelect.innerHTML = '<option value="">-- Bir soru seçin --</option>';
+    
+    // Soruları ekle
+    consultationHistory.forEach((consultation, index) => {
+        const questionPreview = consultation.soru.length > 80 
+            ? consultation.soru.substring(0, 80) + '...'
+            : consultation.soru;
+        
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = `Konsültasyon ${consultationHistory.length - index}: ${questionPreview}`;
+        questionSelect.appendChild(option);
+    });
+    
+    // Soru seçici container'ı göster
+    questionSelectorContainer.style.display = 'block';
+    console.log('Soru seçici görünür hale getirildi');
+}
+
+function hideHistoryContainer() {
+    const historyContainer = document.getElementById('historyContainer');
+    historyContainer.innerHTML = `
+        <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center;">
+            <p style="color: #666; margin: 0;">Yukarıdaki dropdown menüden bir soru seçerek cevabını görüntüleyebilirsiniz.</p>
+        </div>
+    `;
+}
+
+function showSelectedAnswer() {
+    console.log('showSelectedAnswer fonksiyonu çağrıldı');
+    const selectElement = document.getElementById('questionSelect');
+    const selectedIndex = selectElement.value;
+    const answerContainer = document.getElementById('selectedAnswerContainer');
+    
+    console.log('Seçilen index:', selectedIndex);
+    
+    if (!selectElement || !answerContainer) {
+        console.error('Gerekli elementler bulunamadı');
+        return;
+    }
+    
+    if (selectedIndex === '') {
+        answerContainer.style.display = 'none';
+        hideHistoryContainer();
+        return;
+    }
+    
+    const consultation = consultationHistory[selectedIndex];
+    if (!consultation) {
+        console.error('Konsültasyon bulunamadı:', selectedIndex);
+        return;
+    }
+    
+    const selectedQuestionEl = document.getElementById('selectedQuestion');
+    const selectedAnswerEl = document.getElementById('selectedAnswer');
+    const consultationMetaEl = document.getElementById('consultationMeta');
+    
+    if (selectedQuestionEl && selectedAnswerEl && consultationMetaEl) {
+        selectedQuestionEl.innerHTML = formatText(consultation.soru);
+        selectedAnswerEl.innerHTML = formatText(consultation.cevap);
+        consultationMetaEl.innerHTML = 
+            `🩺 Uzmanlık: ${consultation.meslek_dali} | 📅 Tarih: ${formatDate(consultation.tarih)}`;
+        
+        answerContainer.style.display = 'block';
+        console.log('Seçilen cevap gösterildi');
+        
+        // Alt kısımdaki history container'ı gizle
+        const historyContainer = document.getElementById('historyContainer');
+        if (historyContainer) {
+            historyContainer.style.display = 'none';
+        }
+        
+        // Smooth scroll to the answer
+        setTimeout(() => {
+            answerContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+    } else {
+        console.error('Cevap gösterme elementleri bulunamadı');
+    }
+}
+
+
 
 function formatText(text) {
     if (!text) return '';

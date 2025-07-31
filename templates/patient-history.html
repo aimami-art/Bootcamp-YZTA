@@ -9,7 +9,10 @@
 <body>
     <div class="container">
         <header class="header">
-            <h1>🏥 Yapay Zeka Asistanı</h1>
+            <h1>
+                <img src="/static/imagess/MedIntelNew.png" alt="MedIntel Logo" style="height: 80px; width: auto; margin-right: 10px; vertical-align: middle;">
+                AI Asistan Doktorunuz
+            </h1>
             <p class="subtitle" id="patientTitle">Hasta Geçmişi</p>
             <div class="header-actions">
                 <div class="account-menu">
@@ -43,6 +46,34 @@
 
                 <div class="consultation-history">
                     <h3>📋 Soru-Cevap Geçmişi</h3>
+                    
+                    <!-- Soru Seçim Arayüzü -->
+                    <div id="questionSelectorContainer" style="background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: none;">
+                        <h4 style="color: #333; margin-bottom: 15px;">🔍 Soru Seçimi</h4>
+                        <p style="color: #666; margin-bottom: 15px;">Cevabını görmek istediğiniz soruyu seçin:</p>
+                        <select id="questionSelect" onchange="showSelectedAnswer()" class="form-control" style="margin-bottom: 20px; width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+                            <option value="">-- Bir soru seçin --</option>
+                        </select>
+                        
+                        <div id="selectedAnswerContainer" style="display: none; background: #f8f9fa; padding: 20px; border-radius: 10px; margin-top: 20px; border: 1px solid #ddd;">
+                            <div class="question-section" style="margin-bottom: 20px;">
+                                <h5 style="color: #333; margin-bottom: 10px;">❓ Seçilen Soru</h5>
+                                <div id="selectedQuestion" style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #007bff; color: #333; line-height: 1.5;">
+                                </div>
+                            </div>
+                            
+                            <div class="answer-section" style="margin-bottom: 20px;">
+                                <h5 style="color: #333; margin-bottom: 10px;">🤖 AI Yanıtı</h5>
+                                <div id="selectedAnswer" style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #2196f3; color: #333; line-height: 1.5;">
+                                </div>
+                            </div>
+                            
+                            <div class="consultation-meta" style="padding: 10px; background: #e9ecef; border-radius: 4px;">
+                                <small id="consultationMeta" style="color: #666;"></small>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div id="historyContainer">
                         <div class="loading">Geçmiş yükleniyor...</div>
                     </div>
@@ -59,7 +90,7 @@
         </footer>
     </div>
     
-    <script src="/static/js/auth.js?v=1.3"></script>
-    <script src="/static/js/patient-history.js?v=1.3"></script>
+    <script src="/static/js/auth.js?v=1.4"></script>
+    <script src="/static/js/patient-history.js?v=1.4"></script>
 </body>
 </html> 

@@ -23,7 +23,10 @@
         
         /* Yeni kart tasarımı */
         .specialty-option {
-            background: linear-gradient(145deg, #f8f9fa, #ffffff);
+            background-image: url('/static/imagess/arka_web.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
             padding: 25px;
             border-radius: 15px;
             border: none;
@@ -31,27 +34,39 @@
             transition: all 0.3s ease;
             text-decoration: none;
             color: inherit;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
             display: flex;
             align-items: center;
             position: relative;
             overflow: hidden;
         }
         
-        .specialty-option:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        }
-        
-        .specialty-option:before {
+        .specialty-option::before {
             content: "";
             position: absolute;
-            left: 0;
             top: 0;
-            width: 5px;
-            height: 100%;
-            background: linear-gradient(45deg, #667eea, #764ba2);
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.6);
+            z-index: 1;
         }
+        
+        .specialty-option > * {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .specialty-option:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        
+        .specialty-option:hover::before {
+            background: rgba(255, 255, 255, 0.45);
+        }
+        
+
         
         .specialty-icon {
             font-size: 2.5rem;
@@ -73,14 +88,16 @@
         .specialty-content h3 {
             font-size: 1.3rem;
             margin-bottom: 8px;
-            color: #495057;
+            color: #000000;
+            font-weight: 700;
         }
         
         .specialty-content p {
-            color: #6c757d;
+            color: #2d3748;
             margin: 0;
             font-size: 0.9rem;
             line-height: 1.4;
+            font-weight: 500;
         }
         
         @media (min-width: 992px) {
@@ -121,7 +138,10 @@
 <body>
     <div class="container">
         <header class="header">
-            <h1>🏥 Yapay Zeka Asistanı</h1>
+            <h1>
+                <img src="/static/imagess/MedIntelNew.png" alt="MedIntel Logo" style="height: 80px; width: auto; margin-right: 10px; vertical-align: middle;">
+                AI Asistan Doktorunuz
+            </h1>
             <p class="subtitle">Meslek Dalınızı Seçin</p>
             <div class="header-actions">
                 <div class="account-menu">
@@ -143,7 +163,7 @@
         
         <main class="main-content">
             <div class="form-section">
-                <h2>Uzmanlik Alanı Seçimi</h2>
+                <h2>Uzmanlık Alanı Seçimi</h2>
                 <p>Çalışmak istediğiniz tıbbi uzmanlık alanını seçin.</p>
                 
                 <div class="specialty-selection">
