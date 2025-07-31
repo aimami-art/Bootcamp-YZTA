@@ -42,6 +42,27 @@ function logout() {
     window.location.href = '/';
 }
 
+function toggleAccountMenu() {
+    const dropdown = document.getElementById('accountDropdown');
+    const isVisible = dropdown.classList.contains('show');
+    
+    if (isVisible) {
+        dropdown.classList.remove('show');
+    } else {
+        dropdown.classList.add('show');
+    }
+}
+
+// Dışarı tıklandığında menüyü kapat
+document.addEventListener('click', function(event) {
+    const accountMenu = document.querySelector('.account-menu');
+    const dropdown = document.getElementById('accountDropdown');
+    
+    if (accountMenu && dropdown && !accountMenu.contains(event.target)) {
+        dropdown.classList.remove('show');
+    }
+});
+
 if (document.getElementById('loginForm')) {
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
         e.preventDefault();

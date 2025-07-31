@@ -22,6 +22,9 @@ class ChangePassword(BaseModel):
     current_password: str
     new_password: str
 
+class DeleteAccount(BaseModel):
+    password: str
+
 class PatientCreate(BaseModel):
     ad: str
     soyad: str

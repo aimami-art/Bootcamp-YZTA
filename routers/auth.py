@@ -11,7 +11,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta
-from models import UserRegister, UserLogin, ForgotPassword, ResetPassword, ChangePassword
+from models import UserRegister, UserLogin, ForgotPassword, ResetPassword, ChangePassword, DeleteAccount
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -335,6 +335,68 @@ async def change_password(request: ChangePassword, credentials: HTTPAuthorizatio
                         (new_hash, user_id))
             
             return {"message": "Şifre başarıyla değiştirildi"}
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/delete-account")
+async def delete_account(request: DeleteAccount, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Kullanıcı hesabını ve tüm verilerini sil"""
+    try:
+        # Token'dan kullanıcı bilgilerini al
+        payload = verify_jwt_token(credentials)
+        user_id = payload.get("user_id")
+        email = payload.get("email")
+        
+        if not user_id or not email:
+            raise HTTPException(status_code=400, detail="Geçersiz token")
+        
+        with sqlite3.connect('medical_ai.db') as conn:
+            try:
+                # Kullanıcının var olup olmadığını ve şifresini kontrol et
+                result = conn.execute("SELECT sifre_hash FROM kullanicilar WHERE id = ? AND email = ?", 
+                                    (user_id, email)).fetchone()
+                
+                if not result:
+                    raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+                
+                current_hash = result[0]
+                
+                # Şifreyi kontrol et
+                if not verify_password(request.password, current_hash):
+                    raise HTTPException(status_code=400, detail="Şifre hatalı")
+                
+                # Kullanıcıya ait tüm verileri sil
+                # Önce hasta konsültasyon geçmişlerini sil
+                try:
+                    conn.execute("DELETE FROM konsultasyon_gecmisi WHERE hasta_id IN (SELECT id FROM hastalar WHERE kullanici_id = ?)", (user_id,))
+                except sqlite3.Error as e:
+                    print(f"Konsültasyon geçmişi silme hatası (normal olabilir): {e}")
+                
+                # Hasta kayıtlarını sil
+                try:
+                    conn.execute("DELETE FROM hastalar WHERE kullanici_id = ?", (user_id,))
+                except sqlite3.Error as e:
+                    print(f"Hasta kayıtları silme hatası (normal olabilir): {e}")
+                
+                # Son olarak kullanıcı hesabını sil
+                conn.execute("DELETE FROM kullanicilar WHERE id = ?", (user_id,))
+                
+                # Değişiklikleri kaydet
+                conn.commit()
+                
+                return {"message": "Hesabınız ve tüm verileriniz başarıyla silindi"}
+                
+            except sqlite3.Error as e:
+                conn.rollback()
+                print(f"Veritabanı hatası: {e}")
+                raise HTTPException(status_code=500, detail=f"Veritabanı hatası: {str(e)}")
+            except Exception as e:
+                conn.rollback()
+                print(f"Genel hata: {e}")
+                raise
             
     except HTTPException:
         raise

@@ -18,10 +18,10 @@
                     </button>
                     <div class="account-dropdown" id="accountDropdown">
                         <div class="account-dropdown-menu">
-                            <button class="account-dropdown-item" onclick="showChangePassword()">
-                                <span class="icon">🔒</span>
-                                Şifre Değiştir
-                            </button>
+                            <a href="/settings" class="account-dropdown-item">
+                                <span class="icon">⚙️</span>
+                                Ayarlar
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -155,11 +155,7 @@
             }
         }
         
-        // Şifre değiştir
-        function showChangePassword() {
-            window.location.href = '/change-password';
-            toggleAccountMenu();
-        }
+
         
         // Çıkış yap
         function logout() {

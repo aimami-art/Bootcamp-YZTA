@@ -43,4 +43,8 @@ async def ai_asistan(request: Request):
 
 @router.get("/patient-history", response_class=HTMLResponse)
 async def hasta_gecmisi(request: Request):
-    return templates.TemplateResponse("patient-history.html", {"request": request}) 
+    return templates.TemplateResponse("patient-history.html", {"request": request})
+
+@router.get("/settings", response_class=HTMLResponse)
+async def ayarlar(request: Request):
+    return templates.TemplateResponse("settings.html", {"request": request}) 

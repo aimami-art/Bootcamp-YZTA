@@ -11,7 +11,22 @@
         <header class="header">
             <h1>🏥 Yapay Zeka Asistanı</h1>
             <p class="subtitle">AI Konsültasyon</p>
-            <button onclick="logout()" class="btn btn-secondary" style="position: absolute; top: 20px; right: 20px;">Çıkış</button>
+            <div class="header-actions">
+                <div class="account-menu">
+                    <button class="account-menu-btn" onclick="toggleAccountMenu()" id="userAvatar">
+                        U
+                    </button>
+                    <div class="account-dropdown" id="accountDropdown">
+                        <div class="account-dropdown-menu">
+                            <a href="/settings" class="account-dropdown-item">
+                                <span class="icon">⚙️</span>
+                                Ayarlar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-secondary" onclick="logout()">Çıkış</button>
+            </div>
         </header>
         
         <div id="alert-container" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; width: 80%; max-width: 500px;"></div>

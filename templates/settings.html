@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hesap Ayarları - Yapay Zeka Asistanı</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .settings-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .settings-section h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+        
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+        
+        .setting-info h4 {
+            margin: 0 0 5px 0;
+            color: #333;
+        }
+        
+        .setting-info p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .setting-action .btn {
+            padding: 8px 20px;
+            font-size: 0.9rem;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(45deg, #dc3545, #fd7e14);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+        
+        .modal-header {
+            margin-bottom: 20px;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            color: #333;
+        }
+        
+        .modal-body {
+            margin-bottom: 20px;
+        }
+        
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        
+        .close {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            color: #999;
+            cursor: pointer;
+        }
+        
+        .close:hover {
+            color: #333;
+        }
+        
+        .delete-warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #856404;
+        }
+        
+        .delete-warning strong {
+            display: block;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🏥 Yapay Zeka Asistanı</h1>
+            <p class="subtitle">Hesap Ayarları</p>
+            <div class="header-actions">
+                <div class="account-menu">
+                    <button class="account-menu-btn" onclick="toggleAccountMenu()" id="userAvatar">
+                        U
+                    </button>
+                    <div class="account-dropdown" id="accountDropdown">
+                        <div class="account-dropdown-menu">
+                            <a href="/settings" class="account-dropdown-item">
+                                <span class="icon">⚙️</span>
+                                Ayarlar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-secondary" onclick="logout()">Çıkış</button>
+            </div>
+        </header>
+        
+        <div id="alert-container" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; width: 80%; max-width: 500px;"></div>
+        
+        <main class="main-content">
+            <div class="form-section">
+                <h2>⚙️ Hesap Ayarları</h2>
+                <p>Hesabınızı yönetin ve tercihlerinizi düzenleyin.</p>
+                
+                <!-- Güvenlik Ayarları -->
+                <div class="settings-section">
+                    <h3>🔒 Güvenlik</h3>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Şifre Değiştir</h4>
+                            <p>Hesabınızın güvenliği için şifrenizi düzenli olarak değiştirin</p>
+                        </div>
+                        <div class="setting-action">
+                            <button class="btn btn-primary" onclick="openPasswordModal()">Değiştir</button>
+                        </div>
+                    </div>
+                </div>
+                
+
+                <!-- Hesap Yönetimi -->
+                <div class="settings-section">
+                    <h3>👤 Hesap Yönetimi</h3>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Hesabı Sil</h4>
+                            <p>Hesabınızı ve tüm verilerinizi kalıcı olarak silin</p>
+                        </div>
+                        <div class="setting-action">
+                            <button class="btn btn-danger" onclick="openDeleteModal()">Hesabı Sil</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="auth-buttons" style="margin-top: 30px;">
+                    <a href="/specialty" class="btn btn-secondary">Uzmanlık Alanı Seçimi</a>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Şifre Değiştirme Modal -->
+        <div id="passwordModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closePasswordModal()">&times;</span>
+                <div class="modal-header">
+                    <h3>🔒 Şifre Değiştir</h3>
+                </div>
+                <div class="modal-body">
+                    <form id="passwordChangeForm">
+                        <div class="form-group">
+                            <label for="currentPassword">Mevcut Şifre</label>
+                            <input type="password" id="currentPassword" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="newPassword">Yeni Şifre</label>
+                            <input type="password" id="newPassword" class="form-control" required minlength="6">
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmPassword">Yeni Şifre (Tekrar)</label>
+                            <input type="password" id="confirmPassword" class="form-control" required minlength="6">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closePasswordModal()">İptal</button>
+                    <button type="button" class="btn btn-primary" onclick="changePassword()">Şifreyi Değiştir</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Hesap Silme Modal -->
+        <div id="deleteModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeDeleteModal()">&times;</span>
+                <div class="modal-header">
+                    <h3>⚠️ Hesap Silme</h3>
+                </div>
+                <div class="modal-body">
+                    <div class="delete-warning">
+                        <strong>Dikkat!</strong>
+                        Bu işlem geri alınamaz. Hesabınızı sildiğinizde:
+                        <ul style="margin: 10px 0 0 20px;">
+                            <li>Tüm hasta kayıtlarınız silinecek</li>
+                            <li>AI konsültasyon geçmişiniz silinecek</li>
+                            <li>Hesap bilgileriniz kalıcı olarak kaldırılacak</li>
+                        </ul>
+                    </div>
+                    <form id="deleteAccountForm">
+                        <div class="form-group">
+                            <label for="deletePassword">Şifrenizi girerek onaylayın</label>
+                            <input type="password" id="deletePassword" class="form-control" required placeholder="Mevcut şifrenizi girin">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">İptal</button>
+                    <button type="button" class="btn btn-danger" onclick="deleteAccount()">Hesabı Kalıcı Olarak Sil</button>
+                </div>
+            </div>
+        </div>
+        
+        <footer class="footer">
+            <p>&copy; 2025 Yapay Zeka Asistanı - Tıbbi Tanı Sistemi</p>
+        </footer>
+    </div>
+    
+    <script src="/static/js/auth.js"></script>
+    <script>
+        // Modal fonksiyonları
+        function openPasswordModal() {
+            document.getElementById('passwordModal').style.display = 'block';
+        }
+        
+        function closePasswordModal() {
+            document.getElementById('passwordModal').style.display = 'none';
+            document.getElementById('passwordChangeForm').reset();
+        }
+        
+        function openDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'block';
+        }
+        
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+            document.getElementById('deleteAccountForm').reset();
+        }
+        
+        // Modal dışına tıklanınca kapat
+        window.onclick = function(event) {
+            const passwordModal = document.getElementById('passwordModal');
+            const deleteModal = document.getElementById('deleteModal');
+            
+            if (event.target == passwordModal) {
+                closePasswordModal();
+            } else if (event.target == deleteModal) {
+                closeDeleteModal();
+            }
+        }
+        
+        // Şifre değiştirme fonksiyonu
+        async function changePassword() {
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                showAlert('Lütfen tüm alanları doldurunuz.');
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                showAlert('Yeni şifre en az 6 karakter olmalıdır.');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                showAlert('Şifreler eşleşmiyor.');
+                return;
+            }
+            
+            try {
+                const token = getAuthToken();
+                if (!token) {
+                    showAlert('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                const response = await fetch('/api/auth/change-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        current_password: currentPassword,
+                        new_password: newPassword
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert('Şifre başarıyla değiştirildi!', 'success');
+                    closePasswordModal();
+                } else {
+                    showAlert(data.detail || 'İşlem başarısız!');
+                }
+            } catch (error) {
+                console.error('Password change error:', error);
+                showAlert('Bir hata oluştu. Lütfen tekrar deneyiniz.');
+            }
+        }
+        
+        // Hesap silme fonksiyonu
+        async function deleteAccount() {
+            const password = document.getElementById('deletePassword').value;
+            
+            if (!password) {
+                showAlert('Lütfen şifrenizi girin.');
+                return;
+            }
+            
+            if (!confirm('Hesabınızı kalıcı olarak silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!')) {
+                return;
+            }
+            
+            try {
+                const token = getAuthToken();
+                if (!token) {
+                    showAlert('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                const response = await fetch('/api/auth/delete-account', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        password: password
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert('Hesabınız başarıyla silindi. Yönlendiriliyorsunuz...', 'success');
+                    setTimeout(() => {
+                        // Token'ı temizle
+                        localStorage.removeItem('token');
+                        // Ana sayfaya yönlendir
+                        window.location.href = '/';
+                    }, 2000);
+                } else {
+                    showAlert(data.detail || 'İşlem başarısız!');
+                }
+            } catch (error) {
+                console.error('Account delete error:', error);
+                showAlert('Bir hata oluştu. Lütfen tekrar deneyiniz.');
+            }
+        }
+        
+
+    </script>
+</body>
+</html>
