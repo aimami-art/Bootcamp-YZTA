@@ -23,10 +23,8 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.schema import BaseMessage, HumanMessage, AIMessage
 
-import speech_recognition as sr
 import tempfile
 import os as os_path
-from pydub import AudioSegment
 import io
 
 load_dotenv()
@@ -52,7 +50,7 @@ def get_ai_model():
         raise HTTPException(status_code=400, detail="GEMINI_API_KEY bulunamadı")
     
     return ChatGoogleGenerativeAI(
-        model="gemini-1.5-flash",
+        model="gemini-2.5-pro",
         google_api_key=GEMINI_API_KEY,
         temperature=0.1,
         convert_system_message_to_human=True  
@@ -472,45 +470,59 @@ async def get_memory_status(patient_id: int, current_user: dict = Depends(verify
 
 @router.post("/speech-to-text")
 async def speech_to_text(audio: UploadFile = File(...)):
-    """SpeechRecognition kütüphanesi ile ses dosyasını metne çevirir."""
+    """Gemini modeli ile ses dosyasını metne çevirir."""
     try:
-        recognizer = sr.Recognizer()
+        import google.generativeai as genai
+        import base64
         
+        # Gemini API key'ini al
+        GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+        if not GEMINI_API_KEY:
+            raise HTTPException(status_code=500, detail="GEMINI_API_KEY bulunamadı")
+        
+        # Gemini'yi yapılandır
+        genai.configure(api_key=GEMINI_API_KEY)
+        model = genai.GenerativeModel('gemini-2.5-pro')
+        
+        # Ses dosyasını oku
         audio_data = await audio.read()
         
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_file:
-            temp_file.write(audio_data)
-            temp_file_path = temp_file.name
+        # Ses dosyasını base64'e çevir
+        audio_base64 = base64.b64encode(audio_data).decode('utf-8')
+        
+        # MIME type'ı belirle
+        mime_type = "audio/wav"  # Varsayılan
+        if audio.filename.lower().endswith('.mp3'):
+            mime_type = "audio/mpeg"
+        elif audio.filename.lower().endswith('.m4a'):
+            mime_type = "audio/mp4"
+        elif audio.filename.lower().endswith('.ogg'):
+            mime_type = "audio/ogg"
         
         try:
-            
-            with sr.AudioFile(temp_file_path) as source:
-                
-                recognizer.adjust_for_ambient_noise(source, duration=0.5)
-                audio_recorded = recognizer.record(source)
-            
-            try:
-                transcript = recognizer.recognize_google(audio_recorded, language='tr-TR')
-                
-                if not transcript or transcript.strip() == "":
-                    raise HTTPException(status_code=400, detail="Ses tanınamadı veya boş ses dosyası.")
-                
-                return {
-                    "transcript": transcript.strip(),
-                    "success": True,
-                    "message": "Ses başarıyla metne çevrildi."
+            # Gemini'ye ses dosyasını gönder
+            response = model.generate_content([
+                "Bu ses dosyasını Türkçe olarak metne çevir. Sadece çevrilen metni döndür, başka açıklama ekleme.",
+                {
+                    "mime_type": mime_type,
+                    "data": audio_base64
                 }
-                
-            except sr.UnknownValueError:
-                raise HTTPException(status_code=400, detail="Ses anlaşılamadı. Lütfen daha net konuşun veya ses kalitesini artırın.")
+            ])
             
-            except sr.RequestError as e:
-                print(f"Google Speech API hatası: {e}")
-                raise HTTPException(status_code=503, detail="Ses tanıma servisi şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin.")
-        
-        finally:
-            if os_path.exists(temp_file_path):
-                os_path.unlink(temp_file_path)
+            transcript = response.text.strip()
+            
+            if not transcript or transcript.strip() == "":
+                raise HTTPException(status_code=400, detail="Ses tanınamadı veya boş ses dosyası.")
+            
+            return {
+                "transcript": transcript,
+                "success": True,
+                "message": "Gemini ile ses başarıyla metne çevrildi."
+            }
+            
+        except Exception as gemini_error:
+            print(f"Gemini ses tanıma hatası: {gemini_error}")
+            raise HTTPException(status_code=500, detail="Gemini AI ile ses tanıma başarısız oldu. Lütfen daha net konuşun veya daha sonra tekrar deneyin.")
                 
     except HTTPException:
         raise

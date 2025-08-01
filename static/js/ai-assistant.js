@@ -306,105 +306,82 @@ function addSamplePrompts() {
 
 let recognizing = false;
 let recognition;
+let mediaRecorder;
+let audioChunks = [];
 
-if ('webkitSpeechRecognition' in window) {
-    recognition = new webkitSpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = 'tr-TR';
-
-    recognition.onstart = function() {
+// Gemini ile ses tanıma için yeni fonksiyon
+async function startGeminiVoiceRecording() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+        
+        mediaRecorder.ondataavailable = function(event) {
+            audioChunks.push(event.data);
+        };
+        
+        mediaRecorder.onstop = async function() {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            await processAudioWithGemini(audioBlob);
+            stream.getTracks().forEach(track => track.stop());
+        };
+        
+        mediaRecorder.start();
         recognizing = true;
         document.getElementById('micBtn').classList.add('recording');
         document.getElementById('micBtn').innerText = '🛑';
-    };
-    recognition.onend = function() {
-        recognizing = false;
-        document.getElementById('micBtn').classList.remove('recording');
-        document.getElementById('micBtn').innerText = '🎤';
-    };
-    recognition.onerror = function(event) {
-        recognizing = false;
-        document.getElementById('micBtn').classList.remove('recording');
-        document.getElementById('micBtn').innerText = '🎤';
-        showAlert('Ses tanıma hatası: ' + event.error);
-    };
-    recognition.onresult = function(event) {
-        if (event.results.length > 0) {
-            const transcript = event.results[0][0].transcript;
-            const promptInput = document.getElementById('promptInput');
-            promptInput.value += (promptInput.value ? ' ' : '') + transcript;
-            promptInput.focus();
-        }
-    };
-
-    document.getElementById('micBtn').addEventListener('click', function() {
-        if (recognizing) {
-            recognition.stop();
-        } else {
-            recognition.start();
-        }
-    });
-} else {
-    document.getElementById('micBtn').addEventListener('click', function() {
-        showAlert('Tarayıcınızda sesle yazma desteklenmiyor.');
-    });
+        
+    } catch (error) {
+        console.error('Mikrofon erişim hatası:', error);
+        showAlert('Mikrofon erişimi sağlanamadı. Lütfen tarayıcı izinlerini kontrol edin.');
+    }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    const audioFileInput = document.getElementById('audioFile');
-    if (audioFileInput) {
-        audioFileInput.addEventListener('change', async function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            
-            if (!file.type.startsWith('audio/')) {
-                showAlert('Lütfen geçerli bir ses dosyası seçin (MP3, WAV, M4A vb.).');
-                this.value = '';
-                return;
-            }
-            
-            if (file.size > 10 * 1024 * 1024) {
-                showAlert('Ses dosyası çok büyük. Lütfen 10MB altında bir dosya seçin.');
-                this.value = '';
-                return;
-            }
-            
-            const uploadBtn = document.getElementById('uploadAudioBtn');
-            uploadBtn.disabled = true;
-            uploadBtn.innerHTML = '⏳ Çevriliyor...';
-            
-            try {
-                const formData = new FormData();
-                formData.append('audio', file);
-                
-                const token = getAuthToken();
-                const response = await fetch('/api/ai/speech-to-text', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: formData
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok && data.success) {
-                    const promptInput = document.getElementById('promptInput');
-                    promptInput.value += (promptInput.value ? ' ' : '') + data.transcript;
-                    promptInput.focus();
-                    showAlert(data.message || 'Ses başarıyla metne çevrildi!', 'success');
-                } else {
-                    showAlert(data.detail || 'Ses çevrilirken hata oluştu.');
-                }
-            } catch (error) {
-                console.error('Speech-to-text upload error:', error);
-                showAlert('Ses dosyası yüklenirken bir hata oluştu. İnternet bağlantınızı kontrol edin.');
-            } finally {
-                uploadBtn.disabled = false;
-                uploadBtn.innerHTML = '📁🎤';
-                this.value = ''; // Input'u temizle
-            }
+async function stopGeminiVoiceRecording() {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        recognizing = false;
+        document.getElementById('micBtn').classList.remove('recording');
+        document.getElementById('micBtn').innerText = '🎤';
+    }
+}
+
+async function processAudioWithGemini(audioBlob) {
+    try {
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.wav');
+        
+        const token = getAuthToken();
+        const response = await fetch('/api/ai/speech-to-text', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData
         });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            const promptInput = document.getElementById('promptInput');
+            promptInput.value += (promptInput.value ? ' ' : '') + data.transcript;
+            promptInput.focus();
+            showAlert('🎤 Gemini ile ses başarıyla metne çevrildi!', 'success');
+        } else {
+            showAlert(data.detail || 'Ses çevrilirken hata oluştu.');
+        }
+    } catch (error) {
+        console.error('Gemini ses tanıma hatası:', error);
+        showAlert('Ses işleme sırasında bir hata oluştu.');
+    }
+}
+
+// Mikrofon butonuna tıklama olayı
+document.getElementById('micBtn').addEventListener('click', function() {
+    if (recognizing) {
+        stopGeminiVoiceRecording();
+    } else {
+        startGeminiVoiceRecording();
     }
 });
+
