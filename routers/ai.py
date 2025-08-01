@@ -4,6 +4,18 @@ import os
 from models import AIPrompt
 from routers.auth import verify_jwt_token
 from dotenv import load_dotenv
+try:
+    from services.rag_service import rag_service
+    RAG_SERVICE_AVAILABLE = True
+except ImportError as e:
+    RAG_SERVICE_AVAILABLE = False
+    print(f"RAG service yüklenemedi: {e}")
+    # Dummy rag_service oluştur
+    class DummyRAGService:
+        is_initialized = False
+        def initialize(self): return False
+        def get_enhanced_context(self, query): return ""
+    rag_service = DummyRAGService()
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate, FewShotChatMessagePromptTemplate
@@ -273,6 +285,9 @@ KURALLAR:
 """,
         "psikoloji": """Sen uzman bir psikolog/psikiyatristin. Bir meslektaşın (ruh sağlığı uzmanı) ile konsültasyon yapıyorsun. Ruhsal ve davranışsal sorunları değerlendirip, kanıta dayalı yaklaşımlara uygun tanı önerileri sunuyorsun.
 
+RAG KAYNAKLARI:
+Eğer "İlgili bilgiler:" bölümü varsa, bu bilgileri öncelikle dikkate al ve değerlendirmende kullan. Bu bilgiler güncel araştırma ve literatür verilerinden gelir.
+
 CHAT MEMORY KULLANIMI:
 - Bu chat oturumundaki önceki mesajları dikkate al
 - Sorular arasında bağlantı kur
@@ -289,6 +304,7 @@ KURALLAR:
 - Toplam 250 kelimeyi geçme
 - İntihar/kendine zarar verme riskini belirt
 - Kesin tanı koyma, "olası" ifadesi kullan
+- RAG kaynaklarında ilgili bilgi varsa mutlaka referans et
 """
     }
     
@@ -317,9 +333,44 @@ async def ai_konsultasyon(prompt_data: AIPrompt, current_user: dict = Depends(ve
         chat_history = memory.chat_memory.messages
         print(f"Chat history uzunluğu: {len(chat_history)} mesaj")
         
+        # RAG sistemi entegrasyonu (sadece psikoloji için)
+        enhanced_prompt = prompt_data.prompt
+        if prompt_data.meslek_dali.lower() == "psikoloji":
+            if RAG_SERVICE_AVAILABLE:
+                try:
+                    # RAG servisini başlat (eğer başlatılmamışsa)
+                    if not rag_service.is_initialized:
+                        if not rag_service.initialize():
+                            print("RAG sistemi başlatılamadı, normal prompt kullanılıyor")
+                            enhanced_prompt = prompt_data.prompt
+                        else:
+                            print("RAG servisi başarıyla başlatıldı")
+                    
+                    # RAG servisi başlatılmışsa (ilk sorgu veya sonraki sorgular için)
+                    if rag_service.is_initialized:
+                        # İlgili bilgileri ara
+                        rag_context = rag_service.get_enhanced_context(prompt_data.prompt)
+                        if rag_context and len(rag_context.strip()) > 0:
+                            enhanced_prompt = f"{rag_context}\n\nKullanıcı Sorusu: {prompt_data.prompt}"
+                            print(f"RAG bağlamı eklendi. Bağlam uzunluğu: {len(rag_context)} karakter")
+                        else:
+                            print("RAG sisteminde ilgili bilgi bulunamadı, normal prompt kullanılıyor")
+                            enhanced_prompt = prompt_data.prompt
+                    else:
+                        print("RAG servisi başlatılamadı, normal prompt kullanılıyor")
+                        enhanced_prompt = prompt_data.prompt
+                            
+                except Exception as rag_error:
+                    print(f"RAG sistemi hatası: {rag_error}")
+                    print("Normal prompt ile devam ediliyor")
+                    enhanced_prompt = prompt_data.prompt
+            else:
+                print("RAG sistemi mevcut değil, normal prompt kullanılıyor")
+                enhanced_prompt = prompt_data.prompt
+        
         ai_start = time.time()
         ai_response = chain.invoke({
-            "hasta_durumu": prompt_data.prompt,
+            "hasta_durumu": enhanced_prompt,
             "chat_history": chat_history
         })
         ai_end = time.time()

@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Yönetimi - Admin Panel</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #e8f5e8 0%, #f0f8ff 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .admin-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+
+        
+        .admin-sections-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .admin-section {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+            margin-bottom: 0;
+            border: 1px solid #e9ecef;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .admin-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+        }
+        
+        .admin-section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.6rem;
+            font-weight: 700;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 15px;
+            position: relative;
+        }
+        
+        .admin-section h2::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(45deg, #28a745, #20c997);
+        }
+        
+        .admin-section p {
+            color: #6c757d;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #667eea 100%);
+            padding: 20px 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            margin-bottom: 20px;
+            text-align: center;
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 8px;
+            background: linear-gradient(45deg, #28a745, #20c997);
+        }
+        
+        .header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            pointer-events: none;
+        }
+        
+        .header h1 {
+            color: white;
+            margin: 0 0 10px 0;
+            font-size: 1.8rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 2;
+        }
+        
+        .header .subtitle {
+            color: rgba(255,255,255,0.9);
+            font-size: 1rem;
+            margin: 0 0 15px 0;
+            font-weight: 500;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .header-actions .btn {
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .header-actions .btn:hover {
+            background: rgba(255,255,255,0.3);
+            border-color: rgba(255,255,255,0.5);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 30px 20px;
+            text-align: center;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #f8f9ff, #e8f5e8);
+            position: relative;
+        }
+        
+        .upload-area::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            border: 2px dashed rgba(102, 126, 234, 0.3);
+            border-radius: 15px;
+            pointer-events: none;
+        }
+        
+        .upload-area.dragover {
+            border-color: #28a745;
+            background-color: #e8f5e8;
+            transform: scale(1.02);
+        }
+        
+        .upload-input {
+            display: none;
+        }
+        
+        .upload-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .upload-btn:hover {
+            background: linear-gradient(45deg, #5a6fd8, #6a4c93);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .file-info {
+            margin: 20px 0;
+            padding: 25px;
+            background: linear-gradient(135deg, #f8f9fa, #ffffff);
+            border-radius: 15px;
+            display: none;
+            border: 2px solid #e9ecef;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+        }
+        
+        .file-info h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+        
+        .file-info p {
+            color: #495057;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 25px;
+            background: #e9ecef;
+            border-radius: 15px;
+            margin: 25px 0;
+            overflow: hidden;
+            display: none;
+            border: 2px solid #dee2e6;
+        }
+        
+        .progress {
+            height: 100%;
+            background: linear-gradient(45deg, #28a745, #20c997);
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 15px;
+        }
+        
+        .status-list {
+            background: linear-gradient(135deg, #f8f9fa, #ffffff);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 2px solid #e9ecef;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+        }
+        
+        .status-item {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            border-left: 5px solid #007bff;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .status-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .status-item.success {
+            border-left-color: #28a745;
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+        }
+        
+        .status-item.error {
+            border-left-color: #dc3545;
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+        }
+        
+        .history-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 35px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        }
+        
+        .history-table th,
+        .history-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .history-table th {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        
+        .history-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .history-table tr:hover {
+            background-color: #e9ecef;
+            transition: background-color 0.3s ease;
+        }
+        
+        .delete-btn {
+            background: linear-gradient(45deg, #dc3545, #c82333);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+        }
+        
+        .delete-btn:hover {
+            background: linear-gradient(45deg, #c82333, #bd2130);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+        }
+        
+        /* Genel buton stilleri */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 1rem;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #0056b3, #004085);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(45deg, #6c757d, #545b62);
+            color: white;
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+        }
+        
+        .btn-secondary:hover {
+            background: linear-gradient(45deg, #545b62, #3d4449);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <header class="header">
+            <div class="header-actions" style="position: absolute; top: 15px; right: 20px; z-index: 1000; pointer-events: auto;">
+                <a href="/settings" class="btn btn-secondary">Ayarlara Dön</a>
+                <button class="btn btn-secondary" onclick="logout()">Çıkış</button>
+            </div>
+            <h1>
+                <img src="/static/imagess/MedIntelNew.png" alt="MedIntel Logo" style="height: 80px; width: auto; margin-right: 10px; vertical-align: middle;">
+                RAG Sistemi Yönetimi
+            </h1>
+            <p class="subtitle">PDF Döküman Yükleme ve Yönetim Paneli</p>
+        </header>
+        
+        <main class="main-content">
+            <!-- Dikey Düzenleme Container -->
+            <div class="admin-sections-container">
+                <!-- RAG Durum Kontrolü -->
+                <div class="admin-section">
+                    <h2>🔧 Sistem Durumu</h2>
+                    <div id="ragStatus" class="status-list">
+                        <div class="status-item">Durum kontrol ediliyor...</div>
+                    </div>
+                    <button onclick="checkRagStatus()" class="btn btn-secondary">Durumu Yenile</button>
+                </div>
+                
+                <!-- PDF Yükleme -->
+                <div class="admin-section">
+                    <h2>📄 PDF Döküman Yükleme</h2>
+                    <p>Psikoloji alanı için PDF dökümanları yükleyerek RAG sistemini zenginleştirin.</p>
+                    
+                    <div class="upload-area" id="uploadArea">
+                        <div style="font-size: 3rem; margin-bottom: 15px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">📁</div>
+                        <h3 style="color: #2c3e50; margin-bottom: 15px; font-size: 1.3rem; font-weight: 700;">PDF Dosyası Yükle</h3>
+                        <p style="color: #6c757d; margin-bottom: 20px; font-size: 1rem; line-height: 1.5;">PDF dosyasını sürükleyip bırakın veya aşağıdaki butona tıklayarak seçin</p>
+                        <button type="button" class="upload-btn" onclick="document.getElementById('pdfInput').click()">
+                            📄 Dosya Seç
+                        </button>
+                        <input type="file" id="pdfInput" class="upload-input" accept=".pdf" onchange="handleFileSelect(event)">
+                    </div>
+                    
+                    <div class="file-info" id="fileInfo">
+                        <h4 style="font-size: 1.2rem; margin-bottom: 15px;">📄 Seçilen Dosya</h4>
+                        <p id="fileName" style="font-weight: 600; color: #2c3e50; background: white; padding: 10px; border-radius: 8px; border: 1px solid #dee2e6; font-size: 1rem;"></p>
+                        <div style="margin: 15px 0;">
+                            <label for="fileDescription" style="display: block; margin-bottom: 10px; color: #2c3e50; font-weight: 600; font-size: 1rem;">📝 Açıklama (İsteğe Bağlı)</label>
+                            <textarea id="fileDescription" placeholder="Bu döküman hakkında kısa açıklama ekleyin..." rows="3" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e9ecef; font-size: 1rem; resize: vertical; line-height: 1.5;"></textarea>
+                        </div>
+                        <div style="display: flex; gap: 15px; margin-top: 20px;">
+                            <button onclick="uploadFile()" class="btn btn-primary" style="padding: 10px 20px; font-size: 1rem;">🚀 Yükle</button>
+                            <button onclick="cancelUpload()" class="btn btn-secondary" style="padding: 10px 20px; font-size: 1rem;">❌ İptal</button>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-bar" id="progressBar">
+                        <div class="progress" id="progress"></div>
+                    </div>
+                    
+                    <div id="uploadMessages" class="status-list" style="display: none;"></div>
+                </div>
+                
+                <!-- Yükleme Geçmişi -->
+                <div class="admin-section">
+                    <h2>📊 Yükleme Geçmişi</h2>
+                    <button onclick="loadUploadHistory()" class="btn btn-secondary">Geçmişi Yenile</button>
+                    
+                    <div id="historyContainer">
+                        <p>Geçmiş yükleniyor...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="/static/js/auth.js"></script>
+    <script>
+        let selectedFile = null;
+        
+        // Drag & Drop işlemleri
+        const uploadArea = document.getElementById('uploadArea');
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].type === 'application/pdf') {
+                handleFile(files[0]);
+            } else {
+                showMessage('Sadece PDF dosyaları kabul edilir!', 'error');
+            }
+        });
+        
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+        
+        function handleFile(file) {
+            selectedFile = file;
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileInfo').style.display = 'block';
+        }
+        
+        function cancelUpload() {
+            selectedFile = null;
+            document.getElementById('fileInfo').style.display = 'none';
+            document.getElementById('pdfInput').value = '';
+            document.getElementById('fileDescription').value = '';
+        }
+        
+        async function uploadFile() {
+            if (!selectedFile) {
+                showMessage('Lütfen bir dosya seçin!', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            
+            const description = document.getElementById('fileDescription').value;
+            if (description) {
+                formData.append('description', description);
+            }
+            
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                showMessage('Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.', 'error');
+                window.location.href = '/login';
+                return;
+            }
+            
+            try {
+                document.getElementById('progressBar').style.display = 'block';
+                updateProgress(30);
+                
+                const response = await fetch('/api/rag/upload-pdf', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+                
+                updateProgress(80);
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    updateProgress(100);
+                    showMessage(`✅ ${result.message}`, 'success');
+                    cancelUpload();
+                    // Yükleme geçmişini hemen yenile
+                    setTimeout(() => {
+                        loadUploadHistory();
+                        // Başarı mesajını daha uzun göster
+                        showMessage(`📄 "${result.filename}" başarıyla yüklendi ve RAG sistemine eklendi!`, 'success');
+                    }, 1000);
+                } else {
+                    showMessage(`❌ Hata: ${result.detail}`, 'error');
+                }
+                
+            } catch (error) {
+                showMessage(`❌ Yükleme hatası: ${error.message}`, 'error');
+            } finally {
+                setTimeout(() => {
+                    document.getElementById('progressBar').style.display = 'none';
+                    updateProgress(0);
+                }, 2000);
+            }
+        }
+        
+        function updateProgress(percent) {
+            document.getElementById('progress').style.width = percent + '%';
+        }
+        
+        function showMessage(message, type = 'info') {
+            const messagesContainer = document.getElementById('uploadMessages');
+            messagesContainer.style.display = 'block';
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `status-item ${type}`;
+            messageDiv.textContent = message;
+            
+            messagesContainer.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+                if (messagesContainer.children.length === 0) {
+                    messagesContainer.style.display = 'none';
+                }
+            }, 10000); // 10 saniye göster
+        }
+        
+        async function checkRagStatus() {
+            const token = localStorage.getItem('authToken');
+            if (!token) return;
+            
+            try {
+                const response = await fetch('/api/rag/rag-status', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const status = await response.json();
+                const statusContainer = document.getElementById('ragStatus');
+                
+                statusContainer.innerHTML = `
+                    <div class="status-item ${status.is_initialized ? 'success' : 'error'}">
+                        🔧 RAG Sistemi: ${status.is_initialized ? 'Aktif' : 'Pasif'}
+                    </div>
+                    <div class="status-item ${status.pinecone_configured ? 'success' : 'error'}">
+                        🔑 Pinecone Konfigürasyonu: ${status.pinecone_configured ? 'Tamamlandı' : 'Eksik'}
+                    </div>
+                    <div class="status-item">
+                        📊 Index Adı: ${status.index_name}
+                    </div>
+                    <div class="status-item">
+                        🤖 Embedding Model: ${status.embedding_model}
+                    </div>
+                `;
+                
+            } catch (error) {
+                document.getElementById('ragStatus').innerHTML = `
+                    <div class="status-item error">❌ Durum kontrol edilemedi: ${error.message}</div>
+                `;
+            }
+        }
+        
+        async function loadUploadHistory() {
+            const token = localStorage.getItem('authToken');
+            if (!token) return;
+            
+            try {
+                const response = await fetch('/api/rag/upload-history', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                const historyContainer = document.getElementById('historyContainer');
+                
+                if (data.uploads && data.uploads.length > 0) {
+                    let tableHTML = `
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>Dosya Adı</th>
+                                    <th>Açıklama</th>
+                                    <th>Yükleme Tarihi</th>
+                                    <th>Uzmanlık Alanı</th>
+                                    <th>Yükleyen</th>
+                                    <th>İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    
+                    data.uploads.forEach(upload => {
+                        tableHTML += `
+                            <tr>
+                                <td><strong>${upload.filename}</strong></td>
+                                <td>${upload.description || '-'}</td>
+                                <td>${new Date(upload.upload_date).toLocaleString('tr-TR')}</td>
+                                <td><span style="color: #28a745;">${upload.specialty}</span></td>
+                                <td>${upload.uploaded_by_email || 'Bilinmiyor'}</td>
+                                <td>
+                                    <button class="delete-btn" onclick="deleteDocument(${upload.id}, '${upload.filename}')">
+                                        🗑️ Sil
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    tableHTML += '</tbody></table>';
+                    historyContainer.innerHTML = tableHTML;
+                } else {
+                    historyContainer.innerHTML = '<p>Henüz yüklenmiş döküman bulunmamaktadır.</p>';
+                }
+                
+            } catch (error) {
+                document.getElementById('historyContainer').innerHTML = `
+                    <p>❌ Geçmiş yüklenemedi: ${error.message}</p>
+                `;
+            }
+        }
+        
+        async function deleteDocument(id, filename) {
+            if (!confirm(`"${filename}" dosyasını silmek istediğinizden emin misiniz?`)) {
+                return;
+            }
+            
+            const token = localStorage.getItem('authToken');
+            if (!token) return;
+            
+            try {
+                const response = await fetch(`/api/rag/delete-document/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showMessage(`✅ ${result.message}`, 'success');
+                    loadUploadHistory();
+                } else {
+                    showMessage(`❌ Silme hatası: ${result.detail}`, 'error');
+                }
+                
+            } catch (error) {
+                showMessage(`❌ Silme hatası: ${error.message}`, 'error');
+            }
+        }
+        
+        // Sayfa yüklendiğinde
+        document.addEventListener('DOMContentLoaded', () => {
+            checkRagStatus();
+            loadUploadHistory();
+        });
+    </script>
+</body>
+</html>

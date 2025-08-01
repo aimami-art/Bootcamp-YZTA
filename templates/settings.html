@@ -194,8 +194,23 @@
                     </div>
                 </div>
                 
-                <div class="auth-buttons" style="margin-top: 30px;">
-                    <a href="/specialty" class="btn btn-secondary">Uzmanlık Alanı Seçimi</a>
+                <!-- Admin İşlemleri -->
+                <div class="settings-section" id="adminSection" style="display: none;">
+                    <h3>🔧 Admin İşlemleri</h3>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>RAG Sistemi Yönetimi</h4>
+                            <p>RAG sistemini yönetin ve doküman yükleyin</p>
+                        </div>
+                        <div class="setting-action">
+                            <a href="/admin/rag" class="btn" style="background: #28a745; color: white;">Yönet</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 30px; text-align: center;">
+                    <a href="/specialty" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.9rem;">Uzmanlık Alanı Seçimi</a>
                 </div>
             </div>
         </main>
@@ -405,6 +420,61 @@
             }
         }
         
+        // Admin kontrolü
+        function checkAdminAccess() {
+            const token = localStorage.getItem('authToken'); // authToken olarak değiştirildi
+            if (!token) {
+                console.log('Token bulunamadı');
+                return;
+            }
+            
+            // JWT token'ı decode et
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                const userEmail = payload.email;
+                
+                console.log('Kullanıcı email:', userEmail);
+                
+                // Admin email'leri (RAG router'daki ADMIN_EMAILS ile aynı olmalı)
+                const adminEmails = ['uygurmuhammed35@gmail.com'];
+                
+                console.log('Admin email\'leri:', adminEmails);
+                console.log('Email eşleşiyor mu:', adminEmails.includes(userEmail));
+                
+                if (adminEmails.includes(userEmail)) {
+                    console.log('Admin bölümü gösteriliyor');
+                    document.getElementById('adminSection').style.display = 'block';
+                } else {
+                    console.log('Admin bölümü gizli kalıyor');
+                }
+            } catch (error) {
+                console.log('Token decode hatası:', error);
+            }
+        }
+        
+        // Token debug fonksiyonu
+        function debugToken() {
+            console.log('localStorage içeriği:', localStorage);
+            const token = localStorage.getItem('authToken'); // authToken olarak değiştirildi
+            console.log('Token:', token);
+            
+            if (!token) {
+                alert('Token bulunamadı!\n\nlocalStorage içeriği console\'da görüntüleniyor.');
+                return;
+            }
+            
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                console.log('Token payload:', payload);
+                alert(`Token Debug:\nEmail: ${payload.email}\nUser ID: ${payload.user_id}\nExp: ${new Date(payload.exp * 1000).toLocaleString()}`);
+            } catch (error) {
+                console.error('Token decode hatası:', error);
+                alert('Token decode hatası: ' + error.message);
+            }
+        }
+        
+        // Sayfa yüklendiğinde admin kontrolü yap
+        document.addEventListener('DOMContentLoaded', checkAdminAccess);
 
     </script>
 </body>

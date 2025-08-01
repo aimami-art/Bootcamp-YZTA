@@ -47,4 +47,8 @@ async def hasta_gecmisi(request: Request):
 
 @router.get("/settings", response_class=HTMLResponse)
 async def ayarlar(request: Request):
-    return templates.TemplateResponse("settings.html", {"request": request}) 
+    return templates.TemplateResponse("settings.html", {"request": request})
+
+@router.get("/admin/rag", response_class=HTMLResponse)
+async def admin_rag(request: Request):
+    return templates.TemplateResponse("admin-rag.html", {"request": request}) 
