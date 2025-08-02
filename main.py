@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from database import init_db
-from routers import pages, auth, patients, ai, rag
+from routers import pages, auth, patients, ai, rag, news
 
 app = FastAPI(title="Yapay Zeka Asistanı - Tıbbi Tanı Sistemi", version="1.0.0")
 
@@ -22,6 +22,7 @@ app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(patients.router, prefix="/api/patients", tags=["Patients"])
 app.include_router(ai.router, prefix="/api/ai", tags=["AI"])
 app.include_router(rag.router, prefix="/api/rag", tags=["RAG System"])
+app.include_router(news.router, tags=["News"])
 
 @app.on_event("startup")
 async def startup():

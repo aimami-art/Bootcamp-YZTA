@@ -270,39 +270,82 @@
 
         .news-container {
             display: flex;
-            flex-wrap: wrap;
-            gap: 30px;
+            justify-content: center;
+            gap: 40px;
             max-width: 1200px;
             margin: 0 auto;
         }
 
         .news-card {
-            flex: 1;
-            min-width: 300px;
+            flex: 0 1 500px;
+            max-width: 500px;
+            height: 550px;
             background: #fff;
             border-radius: 10px;
             overflow: hidden;
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .news-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
         }
 
         .news-image {
             width: 100%;
             height: 200px;
             object-fit: cover;
+            background-color: #f0f0f0;
+            background-image: linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
+                              linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
+                              linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
+                              linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
         }
 
         .news-content {
             padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .news-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
         }
 
         .news-content h3 {
             color: #00796b;
-            margin-bottom: 10px;
+            margin: 0;
+            flex: 1;
+            margin-right: 10px;
+        }
+
+        .language-badge {
+            background: #009688;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            white-space: nowrap;
         }
 
         .news-content p {
             color: #666;
             margin-bottom: 15px;
+            flex: 1;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            -webkit-box-orient: vertical;
         }
 
         .btn {
@@ -364,6 +407,34 @@
             margin-top: 0;
         }
 
+        .news-loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .news-loading p {
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        .news-loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #009688;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         @media (max-width: 768px) {
             .header {
                 flex-direction: column;
@@ -399,6 +470,7 @@
             .feature-card, .news-card {
                 width: 100%;
                 max-width: 400px;
+                height: 450px;
             }
         }
     </style>
@@ -497,22 +569,11 @@
        <section class="news-section">
             <h2 class="news-title">HABERLER</h2>
             <div class="news-container">
-                <div class="news-card">
-                    <img src="/static/imagess/photo6.jpg" alt="Yapay Zeka Haberi" class="news-image">
-                    <div class="news-content">
-                        <h3>Yapay Zekâ, Erken Parkinson Tanısında %90 Başarı Elde Etti!</h3>
-                        <p>Yeni yapılan araştırmalara göre yapay zekâ destekli görüntüleme sistemleri, Parkinson hastalığını erken evrede tespit etmede %90'a varan doğruluk sağladı.</p>
-                    </div>
+                <!-- Haberler dinamik olarak yüklenecek -->
+                <div class="news-loading">
+                    <p>Haberler yükleniyor...</p>
                 </div>
-
-                <div class="news-card">
-                    <img src="/static/imagess/photo6.jpg" alt="Migren Haberi" class="news-image">
-                    <div class="news-content">
-                        <h3>Migren Ataklarını Önceden Tespit Eden Kulak İçi Sensörler Geliştirildi!</h3>
-                        <p>Harvard Üniversitesi'nde geliştirilen yeni biyosensörler, migren ataklarını başlamadan önce tespit ederek erken müdahale şansı sunuyor.</p>
-                    </div>
-                </div>
-                </div>
+            </div>
         </section>
 
         <footer class="footer">
@@ -521,6 +582,7 @@
         </footer>
     </div>
 
+    <script src="/static/js/news.js"></script>
     <script>
         let slideIndex = 0;
         let slides = []; // Slaytları tutacak dizi
