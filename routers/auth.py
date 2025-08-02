@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import RedirectResponse
-import sqlite3
+from sqlalchemy.orm import Session
+from sqlalchemy import text
 import hashlib
 import jwt
 import os
@@ -12,6 +13,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta
 from models import UserRegister, UserLogin, ForgotPassword, ResetPassword, ChangePassword, DeleteAccount
+from database import get_db, Kullanicilar, SessionLocal
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -123,41 +125,47 @@ def send_reset_email(email: str, reset_token: str):
         return False
 
 @router.post("/register")
-async def kullanici_kayit(user: UserRegister):
+async def kullanici_kayit(user: UserRegister, db: Session = Depends(get_db)):
     try:
-        with sqlite3.connect('medical_ai.db') as conn:
-            result = conn.execute("SELECT id FROM kullanicilar WHERE email = ?", (user.email,)).fetchone()
-            if result:
-                raise HTTPException(status_code=400, detail="Bu email zaten kayıtlı")
-            
-            hashed_password = hash_password(user.sifre)
-            db = conn.execute('''
-                INSERT INTO kullanicilar (ad, soyad, email, sifre_hash, meslek_dali)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (user.ad, user.soyad, user.email, hashed_password, None))
-            
-            user_id = db.lastrowid
-            
-            token = create_jwt_token(user_id, user.email)
-            
-            return {"message": "Kayıt başarılı", "token": token, "user_id": user_id}
+        # Email kontrolü
+        existing_user = db.query(Kullanicilar).filter(Kullanicilar.email == user.email).first()
+        if existing_user:
+            raise HTTPException(status_code=400, detail="Bu email zaten kayıtlı")
+        
+        # Yeni kullanıcı oluştur
+        hashed_password = hash_password(user.sifre)
+        db_user = Kullanicilar(
+            ad=user.ad,
+            soyad=user.soyad,
+            email=user.email,
+            sifre_hash=hashed_password,
+            meslek_dali=None
+        )
+        
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+        
+        token = create_jwt_token(db_user.id, db_user.email)
+        
+        return {"message": "Kayıt başarılı", "token": token, "user_id": db_user.id}
     
     except HTTPException:
         raise
     except Exception as e:
+        db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/login")
-async def kullanici_giris(user: UserLogin):
-    with sqlite3.connect('medical_ai.db') as conn:
-        result = conn.execute("SELECT id, sifre_hash FROM kullanicilar WHERE email = ?", (user.email,)).fetchone()
-        
-        if not result or not verify_password(user.sifre, result[1]):
-            raise HTTPException(status_code=401, detail="Email veya şifre hatalı")
-        
-        token = create_jwt_token(result[0], user.email)
-        
-        return {"message": "Giriş başarılı", "token": token, "user_id": result[0]}
+async def kullanici_giris(user: UserLogin, db: Session = Depends(get_db)):
+    db_user = db.query(Kullanicilar).filter(Kullanicilar.email == user.email).first()
+    
+    if not db_user or not verify_password(user.sifre, db_user.sifre_hash):
+        raise HTTPException(status_code=401, detail="Email veya şifre hatalı")
+    
+    token = create_jwt_token(db_user.id, db_user.email)
+    
+    return {"message": "Giriş başarılı", "token": token, "user_id": db_user.id}
 
 @router.get("/auth/google/url")
 async def google_login_url():
@@ -216,25 +224,35 @@ async def google_auth_callback(code: str, state: str, request: Request):
             raise HTTPException(status_code=400, detail="Email bilgisi alınamadı")
         
         # Kullanıcı veritabanında var mı kontrol et, yoksa kaydet
-        with sqlite3.connect('medical_ai.db') as conn:
-            result = conn.execute("SELECT id FROM kullanicilar WHERE email = ?", (email,)).fetchone()
+        db = SessionLocal()
+        try:
+            existing_user = db.query(Kullanicilar).filter(Kullanicilar.email == email).first()
             
-            if result:
+            if existing_user:
                 # Kullanıcı zaten var, ID'sini al
-                user_id = result[0]
+                user_id = existing_user.id
                 print(f"Mevcut kullanıcı bulundu. ID: {user_id}")
             else:
                 # Kullanıcı yok, yeni kayıt oluştur
                 random_password = secrets.token_urlsafe(16)
                 hashed_password = hash_password(random_password)
                 
-                db = conn.execute('''
-                    INSERT INTO kullanicilar (ad, soyad, email, sifre_hash, meslek_dali)
-                    VALUES (?, ?, ?, ?, ?)
-                ''', (given_name, family_name, email, hashed_password, None))
+                new_user = Kullanicilar(
+                    ad=given_name,
+                    soyad=family_name,
+                    email=email,
+                    sifre_hash=hashed_password,
+                    meslek_dali=None
+                )
                 
-                user_id = db.lastrowid
+                db.add(new_user)
+                db.commit()
+                db.refresh(new_user)
+                
+                user_id = new_user.id
                 print(f"Yeni kullanıcı oluşturuldu. ID: {user_id}")
+        finally:
+            db.close()
         
         # JWT token oluştur
         token = create_jwt_token(user_id, email)
@@ -254,25 +272,24 @@ async def google_auth_callback(code: str, state: str, request: Request):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/forgot-password")
-async def forgot_password(request: ForgotPassword):
+async def forgot_password(request: ForgotPassword, db: Session = Depends(get_db)):
     """Şifre sıfırlama e-postası gönder"""
     try:
-        with sqlite3.connect('medical_ai.db') as conn:
-            # Kullanıcının var olup olmadığını kontrol et
-            result = conn.execute("SELECT id FROM kullanicilar WHERE email = ?", (request.email,)).fetchone()
-            
-            if not result:
-                # Güvenlik için kullanıcı var olmasa bile başarılı mesajı döndür
-                return {"message": "Şifre sıfırlama bağlantısı gönderildi"}
-            
-            # Reset token oluştur
-            reset_token = create_reset_token(request.email)
-            
-            # E-posta gönder
-            if send_reset_email(request.email, reset_token):
-                return {"message": "Şifre sıfırlama bağlantısı gönderildi"}
-            else:
-                raise HTTPException(status_code=500, detail="E-posta gönderilemedi")
+        # Kullanıcının var olup olmadığını kontrol et
+        user = db.query(Kullanicilar).filter(Kullanicilar.email == request.email).first()
+        
+        if not user:
+            # Güvenlik için kullanıcı var olmasa bile başarılı mesajı döndür
+            return {"message": "Şifre sıfırlama bağlantısı gönderildi"}
+        
+        # Reset token oluştur
+        reset_token = create_reset_token(request.email)
+        
+        # E-posta gönder
+        if send_reset_email(request.email, reset_token):
+            return {"message": "Şifre sıfırlama bağlantısı gönderildi"}
+        else:
+            raise HTTPException(status_code=500, detail="E-posta gönderilemedi")
                 
     except HTTPException:
         raise
@@ -280,7 +297,7 @@ async def forgot_password(request: ForgotPassword):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/reset-password")
-async def reset_password(request: ResetPassword):
+async def reset_password(request: ResetPassword, db: Session = Depends(get_db)):
     """Şifreyi sıfırla"""
     try:
         # Token'ı doğrula
@@ -290,13 +307,16 @@ async def reset_password(request: ResetPassword):
         if not email:
             raise HTTPException(status_code=400, detail="Geçersiz token")
         
-        # Şifreyi güncelle
-        with sqlite3.connect('medical_ai.db') as conn:
-            hashed_password = hash_password(request.password)
-            conn.execute("UPDATE kullanicilar SET sifre_hash = ? WHERE email = ?", 
-                        (hashed_password, email))
-            
-            return {"message": "Şifre başarıyla güncellendi"}
+        # Kullanıcıyı bul ve şifreyi güncelle
+        user = db.query(Kullanicilar).filter(Kullanicilar.email == email).first()
+        if not user:
+            raise HTTPException(status_code=400, detail="Kullanıcı bulunamadı")
+        
+        hashed_password = hash_password(request.password)
+        user.sifre_hash = hashed_password
+        db.commit()
+        
+        return {"message": "Şifre başarıyla güncellendi"}
             
     except HTTPException:
         raise
@@ -316,25 +336,28 @@ async def change_password(request: ChangePassword, credentials: HTTPAuthorizatio
             raise HTTPException(status_code=400, detail="Geçersiz token")
         
         # Mevcut şifreyi doğrula
-        with sqlite3.connect('medical_ai.db') as conn:
-            result = conn.execute("SELECT sifre_hash FROM kullanicilar WHERE id = ? AND email = ?", 
-                                (user_id, email)).fetchone()
+        db = SessionLocal()
+        try:
+            user = db.query(Kullanicilar).filter(
+                Kullanicilar.id == user_id, 
+                Kullanicilar.email == email
+            ).first()
             
-            if not result:
+            if not user:
                 raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
             
-            current_hash = result[0]
-            
             # Mevcut şifreyi kontrol et
-            if not verify_password(request.current_password, current_hash):
+            if not verify_password(request.current_password, user.sifre_hash):
                 raise HTTPException(status_code=400, detail="Mevcut şifre hatalı")
             
             # Yeni şifreyi hash'le ve güncelle
             new_hash = hash_password(request.new_password)
-            conn.execute("UPDATE kullanicilar SET sifre_hash = ? WHERE id = ?", 
-                        (new_hash, user_id))
+            user.sifre_hash = new_hash
+            db.commit()
             
             return {"message": "Şifre başarıyla değiştirildi"}
+        finally:
+            db.close()
             
     except HTTPException:
         raise
@@ -353,50 +376,45 @@ async def delete_account(request: DeleteAccount, credentials: HTTPAuthorizationC
         if not user_id or not email:
             raise HTTPException(status_code=400, detail="Geçersiz token")
         
-        with sqlite3.connect('medical_ai.db') as conn:
-            try:
-                # Kullanıcının var olup olmadığını ve şifresini kontrol et
-                result = conn.execute("SELECT sifre_hash FROM kullanicilar WHERE id = ? AND email = ?", 
-                                    (user_id, email)).fetchone()
-                
-                if not result:
-                    raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
-                
-                current_hash = result[0]
-                
-                # Şifreyi kontrol et
-                if not verify_password(request.password, current_hash):
-                    raise HTTPException(status_code=400, detail="Şifre hatalı")
-                
-                # Kullanıcıya ait tüm verileri sil
-                # Önce hasta konsültasyon geçmişlerini sil
-                try:
-                    conn.execute("DELETE FROM konsultasyon_gecmisi WHERE hasta_id IN (SELECT id FROM hastalar WHERE kullanici_id = ?)", (user_id,))
-                except sqlite3.Error as e:
-                    print(f"Konsültasyon geçmişi silme hatası (normal olabilir): {e}")
-                
-                # Hasta kayıtlarını sil
-                try:
-                    conn.execute("DELETE FROM hastalar WHERE kullanici_id = ?", (user_id,))
-                except sqlite3.Error as e:
-                    print(f"Hasta kayıtları silme hatası (normal olabilir): {e}")
-                
-                # Son olarak kullanıcı hesabını sil
-                conn.execute("DELETE FROM kullanicilar WHERE id = ?", (user_id,))
-                
-                # Değişiklikleri kaydet
-                conn.commit()
-                
-                return {"message": "Hesabınız ve tüm verileriniz başarıyla silindi"}
-                
-            except sqlite3.Error as e:
-                conn.rollback()
-                print(f"Veritabanı hatası: {e}")
-                raise HTTPException(status_code=500, detail=f"Veritabanı hatası: {str(e)}")
-            except Exception as e:
-                conn.rollback()
-                print(f"Genel hata: {e}")
-                raise
+        db = SessionLocal()
+        try:
+            # Kullanıcının var olup olmadığını ve şifresini kontrol et
+            user = db.query(Kullanicilar).filter(
+                Kullanicilar.id == user_id, 
+                Kullanicilar.email == email
+            ).first()
+            
+            if not user:
+                raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+            
+            # Şifreyi kontrol et
+            if not verify_password(request.password, user.sifre_hash):
+                raise HTTPException(status_code=400, detail="Şifre hatalı")
+            
+            # Kullanıcıya ait tüm verileri sil
+            # Önce consultation_history kayıtlarını sil
+            db.execute(text("DELETE FROM consultation_history WHERE doktor_id = :user_id"), {"user_id": user_id})
+            
+            # Hasta kayıtlarını sil
+            db.execute(text("DELETE FROM hastalar WHERE doktor_id = :user_id"), {"user_id": user_id})
+            
+            # Son olarak kullanıcı hesabını sil
+            db.delete(user)
+            
+            # Değişiklikleri kaydet
+            db.commit()
+            
+            return {"message": "Hesabınız ve tüm verileriniz başarıyla silindi"}
+            
+        except HTTPException:
+            db.rollback()
+            raise
+        except Exception as e:
+            db.rollback()
+            print(f"Veritabanı hatası: {e}")
+            raise HTTPException(status_code=500, detail=f"Veritabanı hatası: {str(e)}")
+        finally:
+            db.close()
             
     except HTTPException:
         raise

@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  # FastAPI Uygulaması
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:sehrimert@localhost:5432/medical_ai_db
+      - POSTGRES_HOST=localhost
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=medical_ai_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=sehrimert
+    env_file:
+      - .env
+    volumes:
+      - ./static:/app/static
+      - ./templates:/app/templates
+      - ./imagess:/app/imagess
+    restart: unless-stopped
+    network_mode: "host"

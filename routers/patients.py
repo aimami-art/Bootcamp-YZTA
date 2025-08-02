@@ -1,34 +1,52 @@
 from fastapi import APIRouter, HTTPException, Depends
-import sqlite3
+from sqlalchemy.orm import Session
 from models import PatientCreate
 from routers.auth import verify_jwt_token
+from database import get_db, Hastalar
 
 router = APIRouter()
 
 @router.post("/")
-async def hasta_ekle(patient: PatientCreate, current_user: dict = Depends(verify_jwt_token)):
-    with sqlite3.connect('medical_ai.db') as conn:
-        db = conn.execute('''
-            INSERT INTO hastalar (ad, soyad, dogum_tarihi, email, doktor_id)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (patient.ad, patient.soyad, patient.dogum_tarihi, patient.email, current_user["user_id"]))
+async def hasta_ekle(patient: PatientCreate, current_user: dict = Depends(verify_jwt_token), db: Session = Depends(get_db)):
+    try:
+        db_patient = Hastalar(
+            ad=patient.ad,
+            soyad=patient.soyad,
+            dogum_tarihi=patient.dogum_tarihi,
+            email=patient.email,
+            doktor_id=current_user["user_id"]
+        )
         
-        patient_id = db.lastrowid
+        db.add(db_patient)
+        db.commit()
+        db.refresh(db_patient)
         
-        return {"message": "Hasta başarıyla eklendi", "patient_id": patient_id}
+        return {"message": "Hasta başarıyla eklendi", "patient_id": db_patient.id}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/")
-async def hasta_listesi(current_user: dict = Depends(verify_jwt_token)):
-    with sqlite3.connect('medical_ai.db') as conn:
-        conn.row_factory = sqlite3.Row
+async def hasta_listesi(current_user: dict = Depends(verify_jwt_token), db: Session = Depends(get_db)):
+    try:
+        patients = db.query(Hastalar).filter(
+            Hastalar.doktor_id == current_user["user_id"]
+        ).order_by(Hastalar.kayit_tarihi.desc()).all()
         
-        results = conn.execute('''
-            SELECT id, ad, soyad, dogum_tarihi, email, kayit_tarihi, tani_bilgileri, ai_onerileri, son_guncelleme
-            FROM hastalar 
-            WHERE doktor_id = ?
-            ORDER BY kayit_tarihi DESC
-        ''', (current_user["user_id"],)).fetchall()
+        patients_list = []
+        for patient in patients:
+            patients_list.append({
+                "id": patient.id,
+                "ad": patient.ad,
+                "soyad": patient.soyad,
+                "dogum_tarihi": patient.dogum_tarihi,
+                "email": patient.email,
+                "kayit_tarihi": patient.kayit_tarihi,
+                "tani_bilgileri": patient.tani_bilgileri,
+                "ai_onerileri": patient.ai_onerileri,
+                "son_guncelleme": patient.son_guncelleme
+            })
         
-        patients = [dict(row) for row in results]
-        
-        return {"patients": patients} 
+        return {"patients": patients_list}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) 

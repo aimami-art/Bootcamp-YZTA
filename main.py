@@ -3,16 +3,22 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from database import init_db
 from routers import pages, auth, patients, ai, rag, news
+import os
 
 app = FastAPI(title="Yapay Zeka Asistanı - Tıbbi Tanı Sistemi", version="1.0.0")
 
-# CORS ayarları
+# CORS ayarları - Production için güncellendi
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Tüm originlere izin ver (geliştirme için)
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:8000", 
+        "http://34.77.9.250:8000",
+        "https://34.77.9.250:8000"
+    ],
     allow_credentials=True,
-    allow_methods=["*"],  # Tüm HTTP metodlarına izin ver
-    allow_headers=["*"],  # Tüm headerlara izin ver
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["*"],
 )
 
 app.mount("/static", StaticFiles(directory="static"), name="static")

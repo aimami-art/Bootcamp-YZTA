@@ -1,8 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
-import sqlite3
+from sqlalchemy.orm import Session
+from sqlalchemy import text
 import os
 from models import AIPrompt
 from routers.auth import verify_jwt_token
+from database import get_db, Hastalar, ConsultationHistory, TreatmentPlans, SessionLocal
 from dotenv import load_dotenv
 import smtplib
 from email.mime.text import MIMEText
@@ -440,18 +442,19 @@ async def ai_konsultasyon(prompt_data: AIPrompt, current_user: dict = Depends(ve
                 enhanced_prompt = prompt_data.prompt
         
         # Hasta bilgilerini önceden al
-        with sqlite3.connect('medical_ai.db') as conn:
-            conn.row_factory = sqlite3.Row
-            patient_result = conn.execute('''
-                SELECT ad, soyad, dogum_tarihi, email 
-                FROM hastalar 
-                WHERE id = ? AND doktor_id = ?
-            ''', (prompt_data.hasta_id, current_user["user_id"])).fetchone()
+        db = SessionLocal()
+        try:
+            patient_result = db.query(Hastalar).filter(
+                Hastalar.id == prompt_data.hasta_id,
+                Hastalar.doktor_id == current_user["user_id"]
+            ).first()
             
             if patient_result:
-                patient_info = f"Hasta: {patient_result['ad']} {patient_result['soyad']}, Doğum Tarihi: {patient_result['dogum_tarihi'] or 'Belirtilmemiş'}, Email: {patient_result['email'] or 'Belirtilmemiş'}"
+                patient_info = f"Hasta: {patient_result.ad} {patient_result.soyad}, Doğum Tarihi: {patient_result.dogum_tarihi or 'Belirtilmemiş'}, Email: {patient_result.email or 'Belirtilmemiş'}"
             else:
                 patient_info = "Hasta bilgileri bulunamadı"
+        finally:
+            db.close()
         
         # Paralel işleme için asyncio kullan
         import asyncio
@@ -478,46 +481,49 @@ async def ai_konsultasyon(prompt_data: AIPrompt, current_user: dict = Depends(ve
         print(f"Chat Memory'de {len(memory.chat_memory.messages)} mesaj var")
         
         # Veritabanına kaydet
-        with sqlite3.connect('medical_ai.db') as conn:
+        db = SessionLocal()
+        try:
             # Hasta tablosunu güncelle
-            conn.execute('''
-                UPDATE hastalar 
-                SET tani_bilgileri = ?, ai_onerileri = ?, son_guncelleme = CURRENT_TIMESTAMP
-                WHERE id = ? AND doktor_id = ?
-            ''', (prompt_data.prompt, ai_response, prompt_data.hasta_id, current_user["user_id"]))
+            patient = db.query(Hastalar).filter(
+                Hastalar.id == prompt_data.hasta_id,
+                Hastalar.doktor_id == current_user["user_id"]
+            ).first()
             
-            # Konsültasyon geçmişini kaydet (tedavi adımları ile birlikte)
-            conn.execute('''
-                INSERT INTO consultation_history (hasta_id, doktor_id, meslek_dali, soru, cevap)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (prompt_data.hasta_id, current_user["user_id"], prompt_data.meslek_dali, prompt_data.prompt, ai_response))
+            if patient:
+                patient.tani_bilgileri = prompt_data.prompt
+                patient.ai_onerileri = ai_response
+                # son_guncelleme otomatik güncellenecek (onupdate=func.now())
             
-            # Tedavi adımlarını ayrı tablo olarak kaydet (gelecekte kullanım için)
+            # Konsültasyon geçmişini kaydet
+            consultation = ConsultationHistory(
+                hasta_id=prompt_data.hasta_id,
+                doktor_id=current_user["user_id"],
+                meslek_dali=prompt_data.meslek_dali,
+                soru=prompt_data.prompt,
+                cevap=ai_response
+            )
+            db.add(consultation)
+            
+            # Tedavi planını kaydet
             try:
-                conn.execute('''
-                    CREATE TABLE IF NOT EXISTS treatment_plans (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        hasta_id INTEGER,
-                        doktor_id INTEGER,
-                        meslek_dali VARCHAR(100),
-                        tani_bilgisi TEXT,
-                        tedavi_adimlari TEXT,
-                        onay_durumu VARCHAR(20) DEFAULT 'beklemede',
-                        email_gonderildi BOOLEAN DEFAULT FALSE,
-                        olusturma_tarihi TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        onay_tarihi TIMESTAMP,
-                        FOREIGN KEY (hasta_id) REFERENCES hastalar(id),
-                        FOREIGN KEY (doktor_id) REFERENCES kullanicilar(id)
-                    )
-                ''')
-                
-                conn.execute('''
-                    INSERT INTO treatment_plans (hasta_id, doktor_id, meslek_dali, tani_bilgisi, tedavi_adimlari)
-                    VALUES (?, ?, ?, ?, ?)
-                ''', (prompt_data.hasta_id, current_user["user_id"], prompt_data.meslek_dali, ai_response, treatment_steps))
+                treatment_plan = TreatmentPlans(
+                    hasta_id=prompt_data.hasta_id,
+                    doktor_id=current_user["user_id"],
+                    meslek_dali=prompt_data.meslek_dali,
+                    tani_bilgisi=ai_response,
+                    tedavi_adimlari=treatment_steps
+                )
+                db.add(treatment_plan)
                 
             except Exception as db_error:
                 print(f"Tedavi planı kaydetme hatası: {db_error}")
+            
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            print(f"Veritabanı kaydetme hatası: {e}")
+        finally:
+            db.close()
         
         return {
             "ai_response": ai_response,
