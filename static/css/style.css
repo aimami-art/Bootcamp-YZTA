@@ -844,4 +844,104 @@ body {
         margin-top: 15px;
         justify-content: center;
     }
+}
+
+/* Tedavi mesajları için özel stil */
+.treatment-message {
+    border-left: 4px solid #28a745;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.1);
+}
+
+.treatment-message .message-header {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+}
+
+.treatment-actions {
+    border-top: 1px solid #e9ecef;
+    margin-top: 15px;
+    padding-top: 15px;
+}
+
+.treatment-actions .btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-block;
+}
+
+.treatment-actions .btn-success {
+    background-color: #28a745;
+    color: white;
+}
+
+.treatment-actions .btn-success:hover {
+    background-color: #218838;
+    transform: translateY(-1px);
+}
+
+.treatment-actions .btn-info {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.treatment-actions .btn-info:hover {
+    background-color: #138496;
+    transform: translateY(-1px);
+}
+
+.treatment-actions .btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.treatment-actions .btn-danger:hover {
+    background-color: #c82333;
+    transform: translateY(-1px);
+}
+
+/* Modal stilleri */
+.modal {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.modal-content {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    border: none;
+}
+
+.treatment-plan-card {
+    transition: all 0.3s ease;
+}
+
+.treatment-plan-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.status-badge {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Email önizleme stilleri */
+.email-preview {
+    font-family: Arial, sans-serif;
+}
+
+.email-preview h1, .email-preview h2, .email-preview h3 {
+    color: #2c5530;
+}
+
+.email-preview .header {
+    background: linear-gradient(135deg, #2c5530, #4CAF50);
 } 

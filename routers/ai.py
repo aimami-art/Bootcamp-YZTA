@@ -4,6 +4,11 @@ import os
 from models import AIPrompt
 from routers.auth import verify_jwt_token
 from dotenv import load_dotenv
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from datetime import datetime
+import json
 try:
     from services.rag_service import rag_service
     RAG_SERVICE_AVAILABLE = True
@@ -38,7 +43,7 @@ def get_patient_memory(patient_id: int) -> ConversationBufferWindowMemory:
     """Hasta için memory alır veya oluşturur - sadece mevcut chat oturumu için"""
     if patient_id not in patient_memories:
         patient_memories[patient_id] = ConversationBufferWindowMemory(
-            k=4,  
+            k=3,  # Optimal seviye: 3 mesaj sakla
             return_messages=True,
             memory_key="chat_history"
         )
@@ -50,11 +55,190 @@ def get_ai_model():
         raise HTTPException(status_code=400, detail="GEMINI_API_KEY bulunamadı")
     
     return ChatGoogleGenerativeAI(
-        model="gemini-2.5-pro",
+        model="gemini-1.5-flash",  # En güçlü model
         google_api_key=GEMINI_API_KEY,
-        temperature=0.1,
+        temperature=0.3,  # Daha yaratıcı yanıtlar
+        max_tokens=800,   # Daha uzun yanıtlar için
         convert_system_message_to_human=True  
     )
+
+def generate_treatment_steps(diagnosis_response: str, specialty: str, patient_info: str) -> str:
+    """AI'dan gelen tanı yanıtına göre tedavi adımları listesi oluşturur"""
+    try:
+        model = get_ai_model()
+        
+        treatment_prompt = f"""
+Sen bir {specialty} uzmanısın. {patient_info} için detaylı tedavi planı hazırla.
+
+TANI DEĞERLENDİRMESİ:
+{diagnosis_response[:300]}...
+
+TEDAVİ PLANI FORMAT:
+
+### 1. İlaçlı Tedavi Adımları:
+* **İlaç Adı:** Doz, kullanım şekli ve süresi
+* **İlaç 2:** Doz, kullanım şekli ve süresi
+
+### 2. İlaçsız Tedavi Adımları:
+* **Yaşam Tarzı:** Spesifik öneriler
+* **Beslenme:** Detaylı rehber
+* **Takip:** Kontrol zamanları
+
+### 3. Önemli Uyarılar:
+* Yan etkiler ve dikkat edilecek durumlar
+* Acil başvuru koşulları
+
+KURAL: Toplam 180-220 kelime, net ve uygulanabilir öneriler ver.
+"""
+        
+        from langchain_core.prompts import ChatPromptTemplate
+        from langchain_core.output_parsers import StrOutputParser
+        
+        prompt_template = ChatPromptTemplate.from_messages([
+            ("system", "Sen deneyimli bir tıp uzmanısın. Hasta tedavi planları hazırlıyorsun."),
+            ("human", treatment_prompt)
+        ])
+        
+        output_parser = StrOutputParser()
+        chain = prompt_template | model | output_parser
+        
+        treatment_response = chain.invoke({})
+        
+        return treatment_response
+        
+    except Exception as e:
+        print(f"Tedavi adımları oluşturma hatası: {e}")
+        return "Tedavi adımları oluşturulamadı. Lütfen tekrar deneyiniz."
+
+def format_treatment_for_email(treatment_text: str) -> str:
+    """Tedavi metnini email için basit ve temiz formata çevirir"""
+    if not treatment_text:
+        return ""
+    
+    # Basit HTML formatlaması
+    formatted = treatment_text
+    
+    # Markdown işaretlerini temizle
+    formatted = formatted.replace("**", "")
+    formatted = formatted.replace("###", "")
+    formatted = formatted.replace("####", "")
+    
+    # Satır sonlarını HTML br ile değiştir
+    formatted = formatted.replace("\n", "<br>")
+    
+    # Sadece ana başlıkları vurgula (basit)
+    formatted = formatted.replace("TEDAVİ PLANI", '<h3>TEDAVİ PLANI</h3>')
+    formatted = formatted.replace("1. İlaçlı Tedavi Adımları:", '<h4>1. İlaçlı Tedavi Adımları:</h4>')
+    formatted = formatted.replace("2. İlaçsız Tedavi Adımları:", '<h4>2. İlaçsız Tedavi Adımları:</h4>')
+    formatted = formatted.replace("3. Önemli Uyarılar:", '<h4>3. Önemli Uyarılar:</h4>')
+    
+    # Sadece ilaç isimlerini kalın yap
+    import re
+    formatted = re.sub(r'([A-Z][a-zA-ZğüşıöçĞÜŞİÖÇ]+\s+[%\d]+\s+(mg|krem|Krem|tablet|Tablet))', 
+                      r'<strong>\1</strong>', formatted)
+    
+    # Liste öğelerini basit bullet point yap
+    formatted = re.sub(r'\* (.*?):', r'<br>• <strong>\1:</strong>', formatted)
+    
+    # Çoklu br'leri temizle
+    formatted = re.sub(r'(<br>\s*){3,}', '<br><br>', formatted)
+    
+    return formatted
+
+def send_treatment_email(patient_email: str, patient_name: str, doctor_name: str, specialty: str, treatment_steps: str):
+    """Tedavi adımlarını hasta mailine gönderir"""
+    try:
+        smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+        smtp_port = int(os.getenv("SMTP_PORT", "587"))
+        smtp_username = os.getenv("SMTP_USERNAME")
+        smtp_password = os.getenv("SMTP_PASSWORD")
+        from_email = os.getenv("FROM_EMAIL")
+        
+        if not all([smtp_username, smtp_password, from_email]):
+            raise ValueError("Email ayarları eksik")
+        
+        # Email içeriği
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body {{ font-family: Arial, sans-serif; margin: 0; padding: 20px; }}
+                .container {{ max-width: 800px; margin: 0 auto; background: #fff; border-radius: 10px; }}
+                .header {{ background: #2c5530; color: white; padding: 20px; border-radius: 10px 10px 0 0; }}
+                .content {{ padding: 30px; }}
+                .treatment-section {{ margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; }}
+                .warning {{ background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 8px; margin: 20px 0; }}
+                .footer {{ background: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 10px 10px; }}
+                h1, h2, h3 {{ color: #2c5530; }}
+                .logo {{ font-size: 24px; font-weight: bold; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <div class="logo">🏥 MedIntelligence</div>
+                    <h2>Tedavi Planınız Hazır</h2>
+                </div>
+                
+                <div class="content">
+                    <h3>Sayın {patient_name},</h3>
+                    <p>Dr. {doctor_name} ({specialty.title()} Uzmanı) tarafından hazırlanan tedavi planınız aşağıdadır:</p>
+                    
+                    <div class="treatment-section">
+                        <h3>📋 Tedavi Adımları</h3>
+                        <div style="line-height: 1.8; font-size: 14px;">{format_treatment_for_email(treatment_steps)}</div>
+                    </div>
+                    
+                    <div class="warning">
+                        <h4>⚠️ Önemli Uyarılar:</h4>
+                        <ul>
+                            <li>Bu tedavi planı genel önerilerdir, kişisel durumunuza göre değişiklik gösterebilir</li>
+                            <li>İlaçları kullanmadan önce mutlaka kontrole gelin</li>
+                            <li>Herhangi bir yan etki durumunda derhal başvurun</li>
+                            <li>Tedaviye uyum için düzenli kontrolleri aksatmayın</li>
+                        </ul>
+                    </div>
+                    
+                    <p><strong>Tarih:</strong> {datetime.now().strftime('%d.%m.%Y %H:%M')}</p>
+                    <p><strong>Sorumlu Doktor:</strong> Dr. {doctor_name}</p>
+                    <p><strong>Uzmanlık Dalı:</strong> {specialty.title()}</p>
+                </div>
+                
+                <div class="footer">
+                    <p>Bu e-posta Dr. {doctor_name} tarafından gönderilmiştir.</p>
+                    <p>Sağlıklı günler dileriz! 🌟</p>
+                    <p style="font-size: 12px; color: #666;">
+                        MedIntelligence AI Destekli Tıbbi Konsültasyon Sistemi
+                    </p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        # Email oluştur
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = f"Tedavi Planınız - Dr. {doctor_name}"
+        msg['From'] = from_email
+        msg['To'] = patient_email
+        
+        # HTML kısmını ekle
+        html_part = MIMEText(html_content, 'html', 'utf-8')
+        msg.attach(html_part)
+        
+        # Email gönder
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_username, smtp_password)
+            server.send_message(msg)
+        
+        return True
+        
+    except Exception as e:
+        print(f"Email gönderme hatası: {e}")
+        raise HTTPException(status_code=500, detail=f"Email gönderilemedi: {str(e)}")
 
 def get_examples(specialty):
     examples = {
@@ -129,181 +313,70 @@ def create_prompt_template_with_memory(specialty):
     )
     
     system_prompts = {
-        "noroloji": """Sen uzman bir nöroloji doktorusun. Bir meslektaşın (doktor) ile konsültasyon yapıyorsun. Hasta durumlarını değerlendirip, kanıta dayalı tıp prensiplerine uygun tanı önerileri sunuyorsun.
+        "noroloji": """Sen nöroloji uzmanısın. Meslektaşına konsültasyon veriyorsun.
 
-CHAT MEMORY KULLANIMI:
-- Bu chat oturumundaki önceki mesajları dikkate al
-- Sorular arasında bağlantı kur
-- Önceki değerlendirmelerini hatırla
+KURAL: Maksimum 3 tanı, her tanı için 3-4 cümle açıklama, toplam 200-250 kelime.
+FORMAT: 
+1. **Olası Tanı**: Klinik bulgular ve neden bu tanıyı düşündüğün. Önerilen tetkikler. Tedavi yaklaşımı.
 
-MESLEKTAŞ KONSÜLTASYONU:
-- "Hastaneye başvurun" yerine "Ayrıntılı muayene öneriyorum" de
-- "Doktora gidin" yerine "Görüntüleme çalışmaları değerlendirilebilir" de
-- Meslektaş seviyesinde öneriler sun
+Önceki mesajları hatırla. Meslektaş seviyesinde detaylı ama öz bilgi ver.""",
+        "dermatoloji": """Sen dermatoloji uzmanısın. Meslektaşına konsültasyon veriyorsun.
 
-KURALLAR:
-- Maksimum 3 olası tanı öner
-- Her tanı için: Tanı adı + 2 cümle açıklama + Tedavi önerisi
-- Toplam 250 kelimeyi geçme  
-- Acil durumları belirt
-- Kesin tanı koyma, "olası" ifadesi kullan
-""",
-        "dermatoloji": """Sen uzman bir dermatoloji doktorusun. Bir meslektaşın (doktor) ile konsültasyon yapıyorsun. Cilt problemlerini değerlendirip, kanıta dayalı tıp prensiplerine uygun tanı önerileri sunuyorsun.
+KURAL: Maksimum 3 tanı, her tanı için 3-4 cümle açıklama, toplam 200-250 kelime.
+FORMAT: 
+1. **Olası Tanı**: Cilt bulguları ve neden bu tanıyı düşündüğün. Önerilen tetkikler. Tedavi yaklaşımı.
 
-CHAT MEMORY KULLANIMI:
-- Bu chat oturumundaki önceki mesajları dikkate al
-- Sorular arasında bağlantı kur
-- Önceki değerlendirmelerini hatırla
+Önceki mesajları hatırla. Meslektaş seviyesinde detaylı ama öz bilgi ver.""",
+        "kardiyoloji": """Sen kardiyoloji uzmanısın. Meslektaşına konsültasyon veriyorsun.
 
-MESLEKTAŞ KONSÜLTASYONU:
-- "Dermatolog başvurun" yerine "Topikal tedavi önerebilirim" de
-- "Hastaneye gidin" yerine "Biopsi değerlendirilebilir" de
-- Meslektaş seviyesinde öneriler sun
+KURAL: Maksimum 3 tanı, her tanı için 3-4 cümle açıklama, toplam 200-250 kelime.
+FORMAT: 
+1. **Olası Tanı**: Kardiyak bulgular ve neden bu tanıyı düşündüğün. Önerilen tetkikler. Tedavi yaklaşımı.
 
-KURALLAR:
-- Maksimum 3 olası tanı öner
-- Her tanı için: Tanı adı + 2 cümle açıklama + Tedavi önerisi  
-- Toplam 250 kelimeyi geçme
-- Cilt kanserine dikkat çek
-- Kesin tanı koyma, "olası" ifadesi kullan
-""",
-        "kardiyoloji": """Sen uzman bir kardiyoloji doktorusun. Bir meslektaşın (doktor) ile konsültasyon yapıyorsun. Kalp ve damar hastalıklarını değerlendirip, kanıta dayalı tıp prensiplerine uygun tanı önerileri sunuyorsun.
+Önceki mesajları hatırla. Meslektaş seviyesinde detaylı ama öz bilgi ver.""",
+        "pediatri": """Sen pediatri uzmanısın. Meslektaşına konsültasyon veriyorsun.
 
-CHAT MEMORY KULLANIMI:
-- Bu chat oturumundaki önceki mesajları dikkate al
-- Sorular arasında bağlantı kur
-- Önceki değerlendirmelerini hatırla
+KURAL: Maksimum 3 tanı, her tanı için 3-4 cümle açıklama, toplam 200-250 kelime.
+FORMAT: 
+1. **Olası Tanı**: Çocuk yaşına özgü bulgular ve neden bu tanıyı düşündüğün. Önerilen tetkikler. Tedavi yaklaşımı.
 
-MESLEKTAŞ KONSÜLTASYONU:
-- "Kardiyoloğa başvurun" yerine "EKG ve Ekokardiyografi değerlendirmesi öneriyorum" de
-- "Hastaneye gidin" yerine "Kardiyak enzim takibi yapılabilir" de
-- Meslektaş seviyesinde öneriler sun
+Önceki mesajları hatırla. Meslektaş seviyesinde detaylı ama öz bilgi ver.""",
+        "kbb": """Sen KBB uzmanısın. Meslektaşına konsültasyon veriyorsun.
 
-KURALLAR:
-- Maksimum 3 olası tanı öner
-- Her tanı için: Tanı adı + 2 cümle açıklama + Tedavi önerisi  
-- Toplam 250 kelimeyi geçme
-- Kardiyak acilleri belirt
-- Kesin tanı koyma, "olası" ifadesi kullan
-""",
-        "pediatri": """Sen uzman bir pediatri doktorusun. Bir meslektaşın (doktor) ile konsültasyon yapıyorsun. Çocuk sağlığı ve hastalıklarını değerlendirip, kanıta dayalı tıp prensiplerine uygun tanı önerileri sunuyorsun.
+KURAL: Maksimum 3 tanı, her tanı için 3-4 cümle açıklama, toplam 200-250 kelime.
+FORMAT: 
+1. **Olası Tanı**: KBB bulguları ve neden bu tanıyı düşündüğün. Önerilen tetkikler. Tedavi yaklaşımı.
 
-CHAT MEMORY KULLANIMI:
-- Bu chat oturumundaki önceki mesajları dikkate al
-- Sorular arasında bağlantı kur
-- Önceki değerlendirmelerini hatırla
+Önceki mesajları hatırla. Meslektaş seviyesinde detaylı ama öz bilgi ver.""",
+        "dahiliye": """Sen dahiliye uzmanısın. Meslektaşına konsültasyon veriyorsun.
 
-MESLEKTAŞ KONSÜLTASYONU:
-- "Pediatriste başvurun" yerine "Yaşa uygun tedavi planlanabilir" de
-- "Hastaneye gidin" yerine "Gelişimsel değerlendirme öneriyorum" de
-- Meslektaş seviyesinde öneriler sun
+KURAL: Maksimum 3 tanı, her tanı için 3-4 cümle açıklama, toplam 200-250 kelime.
+FORMAT: 
+1. **Olası Tanı**: İç hastalık bulguları ve neden bu tanıyı düşündüğün. Önerilen tetkikler. Tedavi yaklaşımı.
 
-KURALLAR:
-- Maksimum 3 olası tanı öner
-- Her tanı için: Tanı adı + 2 cümle açıklama + Tedavi önerisi  
-- Toplam 250 kelimeyi geçme
-- Yaşa göre acil durumları belirt
-- Kesin tanı koyma, "olası" ifadesi kullan
-""",
-        "kbb": """Sen uzman bir kulak burun boğaz doktorusun. Bir meslektaşın (doktor) ile konsültasyon yapıyorsun. Kulak, burun, boğaz ve baş-boyun bölgesi hastalıklarını değerlendirip, kanıta dayalı tıp prensiplerine uygun tanı önerileri sunuyorsun.
+Önceki mesajları hatırla. Meslektaş seviyesinde detaylı ama öz bilgi ver.""",
+        "endokrinoloji": """Sen endokrinoloji uzmanısın. Meslektaşına konsültasyon veriyorsun.
 
-CHAT MEMORY KULLANIMI:
-- Bu chat oturumundaki önceki mesajları dikkate al
-- Sorular arasında bağlantı kur
-- Önceki değerlendirmelerini hatırla
+KURAL: Maksimum 3 tanı, her tanı için 3-4 cümle açıklama, toplam 200-250 kelime.
+FORMAT: 
+1. **Olası Tanı**: Hormon bulguları ve neden bu tanıyı düşündüğün. Önerilen tetkikler. Tedavi yaklaşımı.
 
-MESLEKTAŞ KONSÜLTASYONU:
-- "KBB uzmanına başvurun" yerine "Endoskopik muayene değerlendirilebilir" de
-- "Hastaneye gidin" yerine "İşitme testi önerilebilir" de
-- Meslektaş seviyesinde öneriler sun
+Önceki mesajları hatırla. Meslektaş seviyesinde detaylı ama öz bilgi ver.""",
+        "ortopedi": """Sen ortopedi uzmanısın. Meslektaşına konsültasyon veriyorsun.
 
-KURALLAR:
-- Maksimum 3 olası tanı öner
-- Her tanı için: Tanı adı + 2 cümle açıklama + Tedavi önerisi  
-- Toplam 250 kelimeyi geçme
-- Hava yolu tıkanıklığı gibi acil durumları belirt
-- Kesin tanı koyma, "olası" ifadesi kullan
-""",
-        "dahiliye": """Sen uzman bir dahiliye (iç hastalıkları) doktorusun. Bir meslektaşın (doktor) ile konsültasyon yapıyorsun. İç hastalıkları ve genel sağlık sorunlarını değerlendirip, kanıta dayalı tıp prensiplerine uygun tanı önerileri sunuyorsun.
+KURAL: Maksimum 3 tanı, her tanı için 3-4 cümle açıklama, toplam 200-250 kelime.
+FORMAT: 
+1. **Olası Tanı**: Ortopedik bulgular ve neden bu tanıyı düşündüğün. Önerilen tetkikler. Tedavi yaklaşımı.
 
-CHAT MEMORY KULLANIMI:
-- Bu chat oturumundaki önceki mesajları dikkate al
-- Sorular arasında bağlantı kur
-- Önceki değerlendirmelerini hatırla
+Önceki mesajları hatırla. Meslektaş seviyesinde detaylı ama öz bilgi ver.""",
+        "psikoloji": """Sen psikoloji uzmanısın. Meslektaşına konsültasyon veriyorsun.
 
-MESLEKTAŞ KONSÜLTASYONU:
-- "Dahiliye uzmanına başvurun" yerine "Kapsamlı kan tetkikleri öneriyorum" de
-- "Hastaneye gidin" yerine "Görüntüleme çalışmaları değerlendirilebilir" de
-- Meslektaş seviyesinde öneriler sun
+RAG: "İlgili bilgiler:" varsa kullan.
+KURAL: Maksimum 3 tanı, her tanı için 3-4 cümle açıklama, toplam 200-250 kelime.
+FORMAT: 
+1. **Olası Tanı**: Psikolojik bulgular ve neden bu tanıyı düşündüğün. Önerilen değerlendirmeler. Tedavi yaklaşımı.
 
-KURALLAR:
-- Maksimum 3 olası tanı öner
-- Her tanı için: Tanı adı + 2 cümle açıklama + Tedavi önerisi  
-- Toplam 250 kelimeyi geçme
-- Acil durumları belirt
-- Kesin tanı koyma, "olası" ifadesi kullan
-""",
-        "endokrinoloji": """Sen uzman bir endokrinoloji doktorusun. Bir meslektaşın (doktor) ile konsültasyon yapıyorsun. Hormon bozuklukları ve metabolik hastalıkları değerlendirip, kanıta dayalı tıp prensiplerine uygun tanı önerileri sunuyorsun.
-
-CHAT MEMORY KULLANIMI:
-- Bu chat oturumundaki önceki mesajları dikkate al
-- Sorular arasında bağlantı kur
-- Önceki değerlendirmelerini hatırla
-
-MESLEKTAŞ KONSÜLTASYONU:
-- "Endokrinoloji uzmanına başvurun" yerine "Hormon düzeyi testleri öneriyorum" de
-- "Hastaneye gidin" yerine "Metabolik değerlendirme yapılabilir" de
-- Meslektaş seviyesinde öneriler sun
-
-KURALLAR:
-- Maksimum 3 olası tanı öner
-- Her tanı için: Tanı adı + 2 cümle açıklama + Tedavi önerisi  
-- Toplam 250 kelimeyi geçme
-- Acil metabolik durumları belirt
-- Kesin tanı koyma, "olası" ifadesi kullan
-""",
-        "ortopedi": """Sen uzman bir ortopedi doktorusun. Bir meslektaşın (doktor) ile konsültasyon yapıyorsun. Kemik, eklem ve kas-iskelet sistemi hastalıklarını değerlendirip, kanıta dayalı tıp prensiplerine uygun tanı önerileri sunuyorsun.
-
-CHAT MEMORY KULLANIMI:
-- Bu chat oturumundaki önceki mesajları dikkate al
-- Sorular arasında bağlantı kur
-- Önceki değerlendirmelerini hatırla
-
-MESLEKTAŞ KONSÜLTASYONU:
-- "Ortopedi uzmanına başvurun" yerine "Radyolojik inceleme öneriyorum" de
-- "Hastaneye gidin" yerine "Fizik tedavi yaklaşımı değerlendirilebilir" de
-- Meslektaş seviyesinde öneriler sun
-
-KURALLAR:
-- Maksimum 3 olası tanı öner
-- Her tanı için: Tanı adı + 2 cümle açıklama + Tedavi önerisi  
-- Toplam 250 kelimeyi geçme
-- Acil durumları belirt
-- Kesin tanı koyma, "olası" ifadesi kullan
-""",
-        "psikoloji": """Sen uzman bir psikolog/psikiyatristin. Bir meslektaşın (ruh sağlığı uzmanı) ile konsültasyon yapıyorsun. Ruhsal ve davranışsal sorunları değerlendirip, kanıta dayalı yaklaşımlara uygun tanı önerileri sunuyorsun.
-
-RAG KAYNAKLARI:
-Eğer "İlgili bilgiler:" bölümü varsa, bu bilgileri öncelikle dikkate al ve değerlendirmende kullan. Bu bilgiler güncel araştırma ve literatür verilerinden gelir.
-
-CHAT MEMORY KULLANIMI:
-- Bu chat oturumundaki önceki mesajları dikkate al
-- Sorular arasında bağlantı kur
-- Önceki değerlendirmelerini hatırla
-
-MESLEKTAŞ KONSÜLTASYONU:
-- "Psikoloğa başvurun" yerine "Psikoterapi yaklaşımı önerilebilir" de
-- "Psikiyatriste gidin" yerine "Değerlendirme ölçekleri uygulanabilir" de
-- Meslektaş seviyesinde öneriler sun
-
-KURALLAR:
-- Maksimum 3 olası tanı öner
-- Her tanı için: Tanı adı + 2 cümle açıklama + Müdahale önerisi  
-- Toplam 250 kelimeyi geçme
-- İntihar/kendine zarar verme riskini belirt
-- Kesin tanı koyma, "olası" ifadesi kullan
-- RAG kaynaklarında ilgili bilgi varsa mutlaka referans et
-"""
+Önceki mesajları hatırla. Meslektaş seviyesinde detaylı ama öz bilgi ver."""
     }
     
     final_prompt = ChatPromptTemplate.from_messages([
@@ -366,39 +439,92 @@ async def ai_konsultasyon(prompt_data: AIPrompt, current_user: dict = Depends(ve
                 print("RAG sistemi mevcut değil, normal prompt kullanılıyor")
                 enhanced_prompt = prompt_data.prompt
         
+        # Hasta bilgilerini önceden al
+        with sqlite3.connect('medical_ai.db') as conn:
+            conn.row_factory = sqlite3.Row
+            patient_result = conn.execute('''
+                SELECT ad, soyad, dogum_tarihi, email 
+                FROM hastalar 
+                WHERE id = ? AND doktor_id = ?
+            ''', (prompt_data.hasta_id, current_user["user_id"])).fetchone()
+            
+            if patient_result:
+                patient_info = f"Hasta: {patient_result['ad']} {patient_result['soyad']}, Doğum Tarihi: {patient_result['dogum_tarihi'] or 'Belirtilmemiş'}, Email: {patient_result['email'] or 'Belirtilmemiş'}"
+            else:
+                patient_info = "Hasta bilgileri bulunamadı"
+        
+        # Paralel işleme için asyncio kullan
+        import asyncio
+        import concurrent.futures
+        
         ai_start = time.time()
+        
+        # Ana tanı yanıtı
         ai_response = chain.invoke({
             "hasta_durumu": enhanced_prompt,
             "chat_history": chat_history
         })
-        ai_end = time.time()
         
+        # Memory'e ekle
         memory.chat_memory.add_user_message(f"Soru: {prompt_data.prompt}")
         memory.chat_memory.add_ai_message(f"Cevap: {ai_response}")
         
-        print(f"AI yanıt süresi: {ai_end - ai_start:.2f} saniye")
+        # Tedavi adımlarını paralel oluştur
+        treatment_steps = generate_treatment_steps(ai_response, prompt_data.meslek_dali, patient_info)
+        
+        ai_end = time.time()
+        print(f"Toplam AI işlem süresi: {ai_end - ai_start:.2f} saniye")
         print(f"LangChain AI yanıtı: {len(ai_response)} karakter")
         print(f"Chat Memory'de {len(memory.chat_memory.messages)} mesaj var")
         
-        
+        # Veritabanına kaydet
         with sqlite3.connect('medical_ai.db') as conn:
-            
+            # Hasta tablosunu güncelle
             conn.execute('''
                 UPDATE hastalar 
                 SET tani_bilgileri = ?, ai_onerileri = ?, son_guncelleme = CURRENT_TIMESTAMP
                 WHERE id = ? AND doktor_id = ?
             ''', (prompt_data.prompt, ai_response, prompt_data.hasta_id, current_user["user_id"]))
             
-           
+            # Konsültasyon geçmişini kaydet (tedavi adımları ile birlikte)
             conn.execute('''
                 INSERT INTO consultation_history (hasta_id, doktor_id, meslek_dali, soru, cevap)
                 VALUES (?, ?, ?, ?, ?)
             ''', (prompt_data.hasta_id, current_user["user_id"], prompt_data.meslek_dali, prompt_data.prompt, ai_response))
+            
+            # Tedavi adımlarını ayrı tablo olarak kaydet (gelecekte kullanım için)
+            try:
+                conn.execute('''
+                    CREATE TABLE IF NOT EXISTS treatment_plans (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        hasta_id INTEGER,
+                        doktor_id INTEGER,
+                        meslek_dali VARCHAR(100),
+                        tani_bilgisi TEXT,
+                        tedavi_adimlari TEXT,
+                        onay_durumu VARCHAR(20) DEFAULT 'beklemede',
+                        email_gonderildi BOOLEAN DEFAULT FALSE,
+                        olusturma_tarihi TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        onay_tarihi TIMESTAMP,
+                        FOREIGN KEY (hasta_id) REFERENCES hastalar(id),
+                        FOREIGN KEY (doktor_id) REFERENCES kullanicilar(id)
+                    )
+                ''')
+                
+                conn.execute('''
+                    INSERT INTO treatment_plans (hasta_id, doktor_id, meslek_dali, tani_bilgisi, tedavi_adimlari)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', (prompt_data.hasta_id, current_user["user_id"], prompt_data.meslek_dali, ai_response, treatment_steps))
+                
+            except Exception as db_error:
+                print(f"Tedavi planı kaydetme hatası: {db_error}")
         
         return {
             "ai_response": ai_response,
+            "treatment_steps": treatment_steps,
             "memory_messages_count": len(memory.chat_memory.messages),
-            "is_first_message": len(memory.chat_memory.messages) == 2  # İlk soru-cevap çifti
+            "is_first_message": len(memory.chat_memory.messages) == 2,  # İlk soru-cevap çifti
+            "patient_info": patient_info
         }
     
     except Exception as e:
@@ -529,3 +655,109 @@ async def speech_to_text(audio: UploadFile = File(...)):
     except Exception as e:
         print(f"Speech-to-Text genel hatası: {e}")
         raise HTTPException(status_code=500, detail=f"Ses işleme sırasında beklenmeyen bir hata oluştu: {str(e)}")
+
+@router.get("/treatment-plans/{patient_id}")
+async def get_treatment_plans(patient_id: int, current_user: dict = Depends(verify_jwt_token)):
+    """Hasta için bekleyen tedavi planlarını listeler"""
+    try:
+        with sqlite3.connect('medical_ai.db') as conn:
+            conn.row_factory = sqlite3.Row
+            
+            # Tedavi planlarını al
+            plans = conn.execute('''
+                SELECT tp.*, h.ad, h.soyad, h.email
+                FROM treatment_plans tp
+                LEFT JOIN hastalar h ON tp.hasta_id = h.id
+                WHERE tp.hasta_id = ? AND tp.doktor_id = ?
+                ORDER BY tp.olusturma_tarihi DESC
+            ''', (patient_id, current_user["user_id"])).fetchall()
+            
+            return {
+                "treatment_plans": [dict(plan) for plan in plans]
+            }
+    
+    except Exception as e:
+        print(f"Tedavi planları listeleme hatası: {e}")
+        raise HTTPException(status_code=500, detail=f"Tedavi planları yüklenemedi: {str(e)}")
+
+@router.post("/approve-treatment/{plan_id}")
+async def approve_and_send_treatment(plan_id: int, current_user: dict = Depends(verify_jwt_token)):
+    """Tedavi planını onaylar ve hasta mailine gönderir"""
+    try:
+        with sqlite3.connect('medical_ai.db') as conn:
+            conn.row_factory = sqlite3.Row
+            
+            # Tedavi planını ve hasta bilgilerini al
+            plan_data = conn.execute('''
+                SELECT tp.*, h.ad, h.soyad, h.email, k.ad as doktor_ad, k.soyad as doktor_soyad
+                FROM treatment_plans tp
+                LEFT JOIN hastalar h ON tp.hasta_id = h.id
+                LEFT JOIN kullanicilar k ON tp.doktor_id = k.id
+                WHERE tp.id = ? AND tp.doktor_id = ?
+            ''', (plan_id, current_user["user_id"])).fetchone()
+            
+            if not plan_data:
+                raise HTTPException(status_code=404, detail="Tedavi planı bulunamadı")
+            
+            if not plan_data['email']:
+                raise HTTPException(status_code=400, detail="Hasta email adresi bulunamadı")
+            
+            # Doktor adını birleştir
+            doctor_name = f"{plan_data['doktor_ad']} {plan_data['doktor_soyad']}"
+            patient_name = f"{plan_data['ad']} {plan_data['soyad']}"
+            
+            # Email gönder
+            send_treatment_email(
+                patient_email=plan_data['email'],
+                patient_name=patient_name,
+                doctor_name=doctor_name,
+                specialty=plan_data['meslek_dali'],
+                treatment_steps=plan_data['tedavi_adimlari']
+            )
+            
+            # Tedavi planını onaylandı olarak işaretle
+            conn.execute('''
+                UPDATE treatment_plans 
+                SET onay_durumu = 'onaylandi', 
+                    email_gonderildi = TRUE, 
+                    onay_tarihi = CURRENT_TIMESTAMP
+                WHERE id = ?
+            ''', (plan_id,))
+            
+            return {
+                "success": True,
+                "message": f"Tedavi planı onaylandı ve {plan_data['email']} adresine gönderildi",
+                "patient_email": plan_data['email'],
+                "patient_name": patient_name
+            }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Tedavi planı onaylama hatası: {e}")
+        raise HTTPException(status_code=500, detail=f"Tedavi planı onaylanamadı: {str(e)}")
+
+@router.delete("/treatment-plan/{plan_id}")
+async def reject_treatment_plan(plan_id: int, current_user: dict = Depends(verify_jwt_token)):
+    """Tedavi planını reddeder"""
+    try:
+        with sqlite3.connect('medical_ai.db') as conn:
+            result = conn.execute('''
+                UPDATE treatment_plans 
+                SET onay_durumu = 'reddedildi'
+                WHERE id = ? AND doktor_id = ?
+            ''', (plan_id, current_user["user_id"]))
+            
+            if result.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Tedavi planı bulunamadı")
+            
+            return {
+                "success": True,
+                "message": "Tedavi planı reddedildi"
+            }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Tedavi planı reddetme hatası: {e}")
+        raise HTTPException(status_code=500, detail=f"Tedavi planı reddedilemedi: {str(e)}")

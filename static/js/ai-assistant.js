@@ -177,7 +177,12 @@ async function sendPrompt() {
             
             addMessage(formattedResponse);
             
-            showAlert('AI yanıtı alındı ve hasta dosyasına kaydedildi.', 'success');
+            // Tedavi adımları varsa göster
+            if (data.treatment_steps) {
+                addTreatmentStepsMessage(data.treatment_steps);
+            }
+            
+            showAlert('AI yanıtı ve tedavi önerileri alındı!', 'success');
         } else {
             throw new Error(data.detail || 'AI yanıtı alınamadı');
         }
@@ -302,6 +307,209 @@ function addSamplePrompts() {
         scrollToBottom();
     }
 }
+
+function addTreatmentStepsMessage(treatmentSteps) {
+    const chatContainer = document.getElementById('chatContainer');
+    const treatmentDiv = document.createElement('div');
+    treatmentDiv.className = 'message ai treatment-message';
+    
+    // Tedavi adımlarını formatla
+    const formattedTreatment = formatTreatmentSteps(treatmentSteps);
+    
+    treatmentDiv.innerHTML = `
+        <div class="message-header">💊 Tedavi Önerileri</div>
+        <div class="message-content">
+            <div class="treatment-content">
+                ${formattedTreatment}
+            </div>
+            <div class="treatment-actions" style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                <p><strong>🩺 Doktor Onayı:</strong></p>
+                <p style="margin: 10px 0; color: #6c757d;">Bu tedavi önerilerini inceleyip, hasta mailine göndermek için onaylayabilirsiniz.</p>
+                <button id="approveTreatmentBtn" class="btn btn-success" onclick="loadTreatmentPlans()">
+                    ✅ Tedavi Planlarını Görüntüle
+                </button>
+            </div>
+        </div>
+    `;
+    
+    chatContainer.appendChild(treatmentDiv);
+    scrollToBottom();
+}
+
+function formatTreatmentSteps(treatmentSteps) {
+    if (!treatmentSteps) return '';
+
+    return treatmentSteps
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/\n{2,}/g, '||PARAGRAPH||')
+        .replace(/\n/g, '<br>')
+        .replace(/\|\|PARAGRAPH\|\|/g, '<br><br>')
+        .replace(/(\d+\.\s+\*\*.*?\*\*)/g, '<br><br>$1')
+        .replace(/(-\s+)/g, '<br>&nbsp;&nbsp;&nbsp;• ')
+        .trim();
+}
+
+
+
+async function loadTreatmentPlans() {
+    try {
+        const token = getAuthToken();
+        const response = await fetch(`/api/ai/treatment-plans/${currentPatientId}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showTreatmentPlansModal(data.treatment_plans);
+        } else {
+            throw new Error(data.detail || 'Tedavi planları yüklenemedi');
+        }
+    } catch (error) {
+        console.error('Tedavi planları yükleme hatası:', error);
+        showAlert('Tedavi planları yüklenirken hata oluştu.');
+    }
+}
+
+function showTreatmentPlansModal(treatmentPlans) {
+    // Modal HTML'ini oluştur
+    const modalHTML = `
+        <div id="treatmentModal" class="modal" style="display: block; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+            <div class="modal-content" style="background-color: #fefefe; margin: 5% auto; padding: 20px; border-radius: 10px; width: 90%; max-width: 800px; max-height: 80vh; overflow-y: auto;">
+                <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3>💊 Tedavi Planları - ${currentPatientName}</h3>
+                    <span class="close" onclick="closeTreatmentModal()" style="font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+                </div>
+                
+                <div class="modal-body">
+                    ${treatmentPlans.length > 0 ? 
+                        treatmentPlans.map((plan, index) => `
+                            <div class="treatment-plan-card" style="border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 20px; background: ${plan.onay_durumu === 'onaylandi' ? '#d4edda' : plan.onay_durumu === 'reddedildi' ? '#f8d7da' : '#fff'};">
+                                <div class="plan-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                    <div>
+                                        <h5 style="margin: 0; color: #2c5530;">📋 Plan ${index + 1}</h5>
+                                        <small style="color: #6c757d;">Oluşturulma: ${new Date(plan.olusturma_tarihi).toLocaleString('tr-TR')}</small>
+                                    </div>
+                                    <div>
+                                        <span class="status-badge" style="padding: 5px 10px; border-radius: 15px; font-size: 12px; font-weight: bold; 
+                                            background: ${plan.onay_durumu === 'onaylandi' ? '#28a745' : plan.onay_durumu === 'reddedildi' ? '#dc3545' : '#ffc107'}; 
+                                            color: ${plan.onay_durumu === 'beklemede' ? '#000' : '#fff'};">
+                                            ${plan.onay_durumu === 'onaylandi' ? '✅ Onaylandı' : plan.onay_durumu === 'reddedildi' ? '❌ Reddedildi' : '⏳ Beklemede'}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="plan-content" style="margin-bottom: 15px;">
+                                    <h6>🎯 Tanı Bilgisi:</h6>
+                                    <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 10px; max-height: 100px; overflow-y: auto;">
+                                        ${plan.tani_bilgisi ? plan.tani_bilgisi.substring(0, 200) + '...' : 'Tanı bilgisi yok'}
+                                    </div>
+                                    
+                                    <h6>💊 Tedavi Adımları:</h6>
+                                    <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 15px; max-height: 150px; overflow-y: auto;">
+                                        ${formatTreatmentSteps(plan.tedavi_adimlari)}
+                                    </div>
+                                </div>
+                                
+                                ${plan.onay_durumu === 'beklemede' ? `
+                                    <div class="plan-actions" style="display: flex; gap: 10px;">
+                                        <button class="btn btn-success" onclick="approveTreatmentPlan(${plan.id})" style="flex: 1;">
+                                            ✅ Onayla ve Hasta Mailine Gönder
+                                        </button>
+                                        <button class="btn btn-danger" onclick="rejectTreatmentPlan(${plan.id})" style="flex: 1;">
+                                            ❌ Reddet
+                                        </button>
+                                    </div>
+                                ` : plan.onay_durumu === 'onaylandi' ? `
+                                    <div style="color: #28a745; font-weight: bold;">
+                                        📧 Email gönderildi: ${plan.email_gonderildi ? 'Evet' : 'Hayır'} 
+                                        ${plan.onay_tarihi ? `(${new Date(plan.onay_tarihi).toLocaleString('tr-TR')})` : ''}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `).join('')
+                        : '<p style="text-align: center; color: #6c757d; padding: 40px;">📝 Henüz tedavi planı oluşturulmamış.</p>'
+                    }
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Modal'ı sayfaya ekle
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function closeTreatmentModal() {
+    const modal = document.getElementById('treatmentModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+async function approveTreatmentPlan(planId) {
+    if (!confirm('Bu tedavi planını onaylayıp hasta mailine göndermek istediğinizden emin misiniz?')) {
+        return;
+    }
+    
+    try {
+        const token = getAuthToken();
+        const response = await fetch(`/api/ai/approve-treatment/${planId}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showAlert(`✅ Tedavi planı onaylandı ve ${data.patient_email} adresine gönderildi!`, 'success');
+            closeTreatmentModal();
+            // Tedavi planlarını yeniden yükle
+            setTimeout(() => loadTreatmentPlans(), 1000);
+        } else {
+            throw new Error(data.detail || 'Tedavi planı onaylanamadı');
+        }
+    } catch (error) {
+        console.error('Tedavi planı onaylama hatası:', error);
+        showAlert('Tedavi planı onaylanırken hata oluştu: ' + error.message);
+    }
+}
+
+async function rejectTreatmentPlan(planId) {
+    if (!confirm('Bu tedavi planını reddetmek istediğinizden emin misiniz?')) {
+        return;
+    }
+    
+    try {
+        const token = getAuthToken();
+        const response = await fetch(`/api/ai/treatment-plan/${planId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showAlert('❌ Tedavi planı reddedildi.', 'warning');
+            closeTreatmentModal();
+            // Tedavi planlarını yeniden yükle
+            setTimeout(() => loadTreatmentPlans(), 1000);
+        } else {
+            throw new Error(data.detail || 'Tedavi planı reddedilemedi');
+        }
+    } catch (error) {
+        console.error('Tedavi planı reddetme hatası:', error);
+        showAlert('Tedavi planı reddedilirken hata oluştu: ' + error.message);
+    }
+}
+
 
 
 let recognizing = false;
