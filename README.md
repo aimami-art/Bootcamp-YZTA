@@ -163,7 +163,7 @@ Sprint 2'de sistem üzerinde önemli iyileştirmeler ve yeni özellikler gelişt
 
 ## Daily Scrum: WhatsApp üzerinden gerçekleştirilmiştir.
 
-[Bağlantı metni](https://drive.google.com/drive/folders/1E73AgaLtTcYYkRNrP4ZHfv20VyfhWtTd?usp=sharing)
+[Bağlantı metni](https://drive.google.com/drive/folders/1lwllg_h4R7DX_PBcP5aGkxQG-hdn_Oet?usp=sharing)
 
 ## Sprint Board Update
 ![](imagess/Sprint_2_Trello2.png)
@@ -242,5 +242,124 @@ Sprint 2'de sistem üzerinde önemli iyileştirmeler ve yeni özellikler gelişt
 - Sesli arayüzün kullanıcı deneyimindeki rolü anlaşıldı
 - Veritabanı yapısının esnekliğinin önemi kavrandı
 - Profesyonel tasarımın güven oluşturmadaki etkisi görüldü
+
+# 📊 Sprint 3
+
+## Sprint Notları
+Sprint 3'te sistem üzerinde kapsamlı geliştirmeler ve yeni özellikler eklenmiştir. RAG (Retrieval-Augmented Generation) sistemi tam entegrasyonu gerçekleştirilmiştir, AI sağlık haberleri sistemi eklenmiştir, admin paneli ve RAG yönetim arayüzü geliştirilmiştir, kullanıcı hesap ayarları ve profil yönetimi sistemi eklenmiştir, veritabanı yapısı genişletilmiştir, güvenlik önlemleri artırılmıştır ve sistem performansı optimize edilmiştir.
+
+## Bu Sprint İçinde Tahmin Edilen Tamamlanacak Puan
+**Toplam Puan: 100**
+
+### Tamamlanan User Story'ler:
+- **RAG Sistemi Tam Entegrasyonu** (25 puan) ✅
+- **AI Sağlık Haberleri Sistemi** (15 puan) ✅  
+- **Admin Panel ve RAG Yönetim Arayüzü** (20 puan) ✅
+- **Kullanıcı Hesap Ayarları ve Profil Yönetimi** (15 puan) ✅
+- **Veritabanı Yapısı Genişletme** (10 puan) ✅
+- **Docker Containerization ve Deployment** (10 puan) ✅
+- **Sistem Performans Optimizasyonu** (5 puan) ✅
+
+## Puan Tamamlama Mantığı
+- **Kompleksite Değerlendirmesi**: 
+  - 1-10: Basit görevler 
+  - 11-15: Orta görevler 
+  - 16-25: Karmaşık görevler 
+
+## Daily Scrum: WhatsApp üzerinden gerçekleştirilmiştir.
+
+[Bağlantı metni](https://drive.google.com/drive/folders/1E73AgaLtTcYYkRNrP4ZHfv20VyfhWtTd?usp=sharing)
+
+## Sprint Board Update
+![](imagess/trellos3_1.png)
+![](imagess/trellos3_2.png)
+
+## Ürün Durumu ScreenShots
+
+![](imagess/sprint3_1.png)
+![](imagess/sprint3_2.png)
+![](imagess/sprint3_3.png)
+![](imagess/sprint3_4.png)
+![](imagess/sprint3_5.png)
+![](imagess/sprint3_6.png)
+![](imagess/sprint3_7.png)
+![](imagess/sprint3_8.png)
+![](imagess/sprint3_9.png)
+
+
+## Sprint Review
+### Tamamlanan Özellikler:
+1. **RAG Sistemi Tam Entegrasyonu**
+   - Pinecone vektör veritabanı entegrasyonu
+   - PDF dosya yükleme ve işleme sistemi
+   - Vektör tabanlı benzerlik arama
+   - RAG servisi ile AI yanıtlarının geliştirilmesi
+   - Admin paneli üzerinden RAG yönetimi
+   
+2. **AI Sağlık Haberleri Sistemi**
+   - RSS feed entegrasyonu ile otomatik haber çekme
+   - AI ve sağlık alanında filtreleme sistemi
+   - Haber cache sistemi ve performans optimizasyonu
+   - Kullanıcı dostu haber görüntüleme arayüzü
+
+3. **Admin Panel ve RAG Yönetim Arayüzü**
+   - PDF dosya yükleme ve yönetim sistemi
+   - RAG doküman geçmişi görüntüleme
+   - Doküman silme ve düzenleme özellikleri
+   - RAG sistem durumu kontrolü
+   - Admin yetki kontrolü ve güvenlik
+
+4. **Kullanıcı Hesap Ayarları ve Profil Yönetimi**
+   - Kullanıcı profil düzenleme sistemi
+   - Şifre değiştirme özelliği
+   - Hesap silme ayarları
+   - Modern ve kullanıcı dostu ayarlar arayüzü
+
+5. **Veritabanı Yapısı Genişletme**
+   - RAGUploads tablosu eklendi
+   - TreatmentPlans tablosu genişletildi
+   - Yeni ilişkiler ve indeksler eklendi
+   - Veritabanı performans optimizasyonu
+
+6. **Docker Containerization ve Deployment**
+   - Dockerfile ile container imajı oluşturma
+   - Docker Compose ile çoklu servis yönetimi
+   - Production-ready deployment konfigürasyonu
+
+7. **Sistem Performans Optimizasyonu**
+   - Haber cache sistemi
+   - RAG sorgu optimizasyonu
+   - Veritabanı sorgu iyileştirmeleri
+   - Frontend performans optimizasyonları
+
+## Sprint Retrospective
+
+### İyi Giden Şeyler:
+- RAG sistemi başarıyla entegre edildi ve AI yanıt kalitesi önemli ölçüde artırıldı
+- AI sağlık haberleri sistemi kullanıcılara güncel bilgi sağladı
+- Admin paneli ile sistem yönetimi kolaylaştı
+- Kullanıcı hesap ayarları sistemi kullanıcı deneyimini iyileştirdi
+- Veritabanı yapısı genişletildi ve performans artırıldı
+- Docker containerization ile deployment süreci kolaylaştı
+- Güvenlik önlemleri artırıldı ve sistem güvenilirliği yükseltildi
+- Sistem performansı optimize edildi ve hız artırıldı
+- MVP tamamlandı. 
+
+### Geliştirilmesi Gerekenler:
+- Daha fazla meslek dalı için RAG dokümanları eklenebilir
+- Haber sistemi daha fazla kaynak ile genişletilebilir
+- Kullanıcı raporlama ve analitik özellikleri geliştirilebilir
+- Mobil uygulama geliştirilebilir
+- Psikoloji için hasta isim soyisim yerine takma ad kaydedilmesi
+
+### Öğrenilenler:
+- RAG sisteminin AI yanıt kalitesine olan etkisi anlaşıldı
+- Vektör veritabanlarının gücü ve kullanım alanları kavrandı
+- RSS feed entegrasyonunun haber sistemleri için önemi görüldü
+- Admin paneli tasarımının sistem yönetimi için kritik olduğu anlaşıldı
+- Kullanıcı hesap yönetiminin kullanıcı deneyimindeki rolü kavrandı
+- Docker containerization'ın deployment süreçlerini kolaylaştırdığı görüldü
+- Production-ready deployment konfigürasyonunun önemi anlaşıldı
+- Ürün elde etmenin getirdiği pozitif duygular anlaşıldı.
 
 
