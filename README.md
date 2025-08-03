@@ -246,7 +246,7 @@ Sprint 2'de sistem üzerinde önemli iyileştirmeler ve yeni özellikler gelişt
 # 📊 Sprint 3
 
 ## Sprint Notları
-Sprint 3'te sistem üzerinde kapsamlı geliştirmeler ve yeni özellikler eklenmiştir. RAG (Retrieval-Augmented Generation) sistemi tam entegrasyonu gerçekleştirilmiştir, AI sağlık haberleri sistemi eklenmiştir, admin hesabına özel admin paneli ve RAG yönetim arayüzü geliştirilmiştir, kullanıcı hesap ayarları ve profil yönetimi sistemi eklenmiştir, veritabanı yapısı genişletilmiştir, güvenlik önlemleri artırılmıştır ve sistem performansı optimize edilmiştir. Uzman paneli sayfaları entegresi geliştirme aşamasına bırakılmıştır. 
+Sprint 3'te sistem üzerinde kapsamlı geliştirmeler ve yeni özellikler eklenmiştir. RAG (Retrieval-Augmented Generation) sistemi tam entegrasyonu gerçekleştirilmiştir, AI sağlık haberleri sistemi eklenmiştir, admin hesabına özel admin paneli ve RAG yönetim arayüzü geliştirilmiştir, kullanıcı hesap ayarları ve profil yönetimi sistemi eklenmiştir, SQLite'dan PostgreSQL'e veritabanı geçişi yapılmıştır, veritabanı yapısı genişletilmiştir, güvenlik önlemleri artırılmıştır ve sistem performansı optimize edilmiştir. Uzman paneli sayfaları entegresi geliştirme aşamasına bırakılmıştır. 
 
 ## Bu Sprint İçinde Tahmin Edilen Tamamlanacak Puan
 **Toplam Puan: 100**
@@ -317,6 +317,7 @@ Sprint 3'te sistem üzerinde kapsamlı geliştirmeler ve yeni özellikler eklenm
 
 5. **Veritabanı Yapısı Genişletme**
    - RAGUploads tablosu eklendi
+   - SQLite'dan PostgreSQL'e geçiş yapıldı
    - TreatmentPlans tablosu genişletildi
    - Yeni ilişkiler ve indeksler eklendi
    - Veritabanı performans optimizasyonu
@@ -339,6 +340,7 @@ Sprint 3'te sistem üzerinde kapsamlı geliştirmeler ve yeni özellikler eklenm
 - AI sağlık haberleri sistemi kullanıcılara güncel bilgi sağladı
 - Admin paneli ile sistem yönetimi kolaylaştı
 - Kullanıcı hesap ayarları sistemi kullanıcı deneyimini iyileştirdi
+- SQLite'dan PostgreSQL'e geçiş ile veritabanı performansı artırıldı
 - Veritabanı yapısı genişletildi ve performans artırıldı
 - Docker containerization ile deployment süreci kolaylaştı
 - Güvenlik önlemleri artırıldı ve sistem güvenilirliği yükseltildi
@@ -362,6 +364,7 @@ Sprint 3'te sistem üzerinde kapsamlı geliştirmeler ve yeni özellikler eklenm
 - RSS feed entegrasyonunun haber sistemleri için önemi görüldü
 - Admin paneli tasarımının sistem yönetimi için kritik olduğu anlaşıldı
 - Kullanıcı hesap yönetiminin kullanıcı deneyimindeki rolü kavrandı
+- PostgreSQL'in production ortamı için güvenilirliği ve performansı kavrandı
 - Docker containerization'ın deployment süreçlerini kolaylaştırdığı görüldü
 - Production-ready deployment konfigürasyonunun önemi anlaşıldı
 - Ürün elde etmenin getirdiği pozitif duygular anlaşıldı.
