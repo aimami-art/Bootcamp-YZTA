@@ -169,7 +169,7 @@ async function sendPrompt() {
     
     try {
         const token = getAuthToken();
-        const response = await fetch('/api/ai/consultation', {
+                    const response = await fetch(`${window.location.protocol}//${window.location.host}/api/ai/consultation`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -584,7 +584,7 @@ async function processAudioWithGemini(audioBlob) {
         formData.append('audio', audioBlob, 'recording.wav');
         
         const token = getAuthToken();
-        const response = await fetch('/api/ai/speech-to-text', {
+                    const response = await fetch(`${window.location.protocol}//${window.location.host}/api/ai/speech-to-text`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`

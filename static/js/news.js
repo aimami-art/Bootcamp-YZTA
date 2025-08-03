@@ -1,7 +1,7 @@
 // Haberleri yükleyen fonksiyon
 async function loadAIHealthNews() {
     try {
-        const response = await fetch('/api/news/ai-health');
+        const response = await fetch(`${window.location.protocol}//${window.location.host}/api/news/ai-health`);
         const data = await response.json();
         
         if (data.success && data.news) {
@@ -107,7 +107,7 @@ function formatDate(dateString) {
 // Haberleri yenileme fonksiyonu
 async function refreshNews() {
     try {
-        const response = await fetch('/api/news/refresh');
+        const response = await fetch(`${window.location.protocol}//${window.location.host}/api/news/refresh`);
         const data = await response.json();
         
         if (data.success) {

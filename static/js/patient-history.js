@@ -24,7 +24,7 @@ function initializePatientHistory() {
 async function loadPatientData() {
     try {
         const token = getAuthToken();
-        const response = await fetch('/api/patients/', {
+        const response = await fetch(`${window.location.protocol}//${window.location.host}/api/patients/`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`
