@@ -2,7 +2,8 @@ from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from fastapi.security import HTTPAuthorizationCredentials
 from routers.auth import verify_jwt_token, security
 from typing import List
-import sqlite3
+from database import SessionLocal, RAGUploads, Kullanicilar
+from sqlalchemy.orm import Session
 
 try:
     from services.rag_service import rag_service
@@ -81,30 +82,19 @@ async def upload_pdf_to_rag(
         
         # İsteğe bağlı: Yükleme geçmişini kaydet
         try:
-            conn = sqlite3.connect("medical_ai.db")
-            cursor = conn.cursor()
-            
-            # RAG uploads tablosunu oluştur (eğer yoksa)
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS rag_uploads (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    filename TEXT NOT NULL,
-                    description TEXT,
-                    uploaded_by INTEGER,
-                    upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    specialty TEXT DEFAULT 'psikoloji',
-                    FOREIGN KEY (uploaded_by) REFERENCES kullanicilar (id)
+            db: Session = SessionLocal()
+            try:
+                # Yüklemeyi kaydet
+                new_upload = RAGUploads(
+                    filename=file.filename,
+                    description=description,
+                    uploaded_by=current_user["user_id"],
+                    specialty="psikoloji"
                 )
-            ''')
-            
-            # Yüklemeyi kaydet
-            cursor.execute('''
-                INSERT INTO rag_uploads (filename, description, uploaded_by, specialty)
-                VALUES (?, ?, ?, ?)
-            ''', (file.filename, description, current_user["user_id"], "psikoloji"))
-            
-            conn.commit()
-            conn.close()
+                db.add(new_upload)
+                db.commit()
+            finally:
+                db.close()
             
         except Exception as db_error:
             print(f"Veritabanı kayıt hatası: {db_error}")
@@ -124,29 +114,34 @@ async def get_upload_history(current_user: dict = Depends(verify_admin)):
     """RAG sistemi yükleme geçmişini getir (Sadece admin)"""
     
     try:
-        conn = sqlite3.connect("medical_ai.db")
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            SELECT r.id, r.filename, r.description, r.upload_date, r.specialty, k.email
-            FROM rag_uploads r
-            LEFT JOIN kullanicilar k ON r.uploaded_by = k.id
-            ORDER BY r.upload_date DESC
-        ''')
-        
-        uploads = []
-        for row in cursor.fetchall():
-            uploads.append({
-                "id": row[0],
-                "filename": row[1],
-                "description": row[2],
-                "upload_date": row[3],
-                "specialty": row[4],
-                "uploaded_by_email": row[5]
-            })
-        
-        conn.close()
-        return {"uploads": uploads}
+        db: Session = SessionLocal()
+        try:
+            # Upload geçmişini al
+            results = db.query(
+                RAGUploads.id,
+                RAGUploads.filename,
+                RAGUploads.description,
+                RAGUploads.upload_date,
+                RAGUploads.specialty,
+                Kullanicilar.email
+            ).join(
+                Kullanicilar, RAGUploads.uploaded_by == Kullanicilar.id, isouter=True
+            ).order_by(RAGUploads.upload_date.desc()).all()
+            
+            uploads = []
+            for row in results:
+                uploads.append({
+                    "id": row.id,
+                    "filename": row.filename,
+                    "description": row.description,
+                    "upload_date": row.upload_date.isoformat() if row.upload_date else None,
+                    "specialty": row.specialty,
+                    "uploaded_by_email": row.email
+                })
+            
+            return {"uploads": uploads}
+        finally:
+            db.close()
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Geçmiş getirme hatası: {str(e)}")
@@ -156,27 +151,26 @@ async def delete_document(upload_id: int, current_user: dict = Depends(verify_ad
     """RAG sisteminden döküman sil (Sadece admin)"""
     
     try:
-        conn = sqlite3.connect("medical_ai.db")
-        cursor = conn.cursor()
-        
-        # Döküman bilgilerini al
-        cursor.execute('SELECT filename FROM rag_uploads WHERE id = ?', (upload_id,))
-        result = cursor.fetchone()
-        
-        if not result:
-            raise HTTPException(status_code=404, detail="Döküman bulunamadı")
-        
-        filename = result[0]
-        
-        # Veritabanından sil
-        cursor.execute('DELETE FROM rag_uploads WHERE id = ?', (upload_id,))
-        conn.commit()
-        conn.close()
-        
-        # Not: Pinecone'dan silme işlemi daha karmaşık olduğu için şimdilik sadece DB'den siliyoruz
-        # Gelecekte filename bazlı Pinecone vector silme özelliği eklenebilir
-        
-        return {"message": f"'{filename}' dökümanı başarıyla silindi"}
+        db: Session = SessionLocal()
+        try:
+            # Döküman bilgilerini al
+            upload = db.query(RAGUploads).filter(RAGUploads.id == upload_id).first()
+            
+            if not upload:
+                raise HTTPException(status_code=404, detail="Döküman bulunamadı")
+            
+            filename = upload.filename
+            
+            # Veritabanından sil
+            db.delete(upload)
+            db.commit()
+            
+            # Not: Pinecone'dan silme işlemi daha karmaşık olduğu için şimdilik sadece DB'den siliyoruz
+            # Gelecekte filename bazlı Pinecone vector silme özelliği eklenebilir
+            
+            return {"message": f"'{filename}' dökümanı başarıyla silindi"}
+        finally:
+            db.close()
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Döküman silme hatası: {str(e)}")

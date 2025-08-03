@@ -81,6 +81,19 @@ class TreatmentPlans(Base):
     hasta = relationship("Hastalar", foreign_keys=[hasta_id])
     doktor = relationship("Kullanicilar", foreign_keys=[doktor_id])
 
+class RAGUploads(Base):
+    __tablename__ = "rag_uploads"
+    
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    filename = Column(String, nullable=False)
+    description = Column(Text)
+    uploaded_by = Column(Integer, ForeignKey("kullanicilar.id"))
+    upload_date = Column(DateTime, default=datetime.now)
+    specialty = Column(String, default="psikoloji")
+    
+    # İlişki
+    uploader = relationship("Kullanicilar", foreign_keys=[uploaded_by])
+
 def get_db():
     """Database session dependency"""
     db = SessionLocal()

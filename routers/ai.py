@@ -545,21 +545,27 @@ async def get_patient_consultation_history(patient_id: int, current_user: dict =
     try:
         print(f"DEBUG: Hasta ID: {patient_id}, Doktor ID: {current_user['user_id']}")
         
-        with sqlite3.connect('medical_ai.db') as conn:
-            conn.row_factory = sqlite3.Row
+        db: Session = SessionLocal()
+        try:
+            results = db.query(ConsultationHistory).filter(
+                ConsultationHistory.hasta_id == patient_id,
+                ConsultationHistory.doktor_id == current_user["user_id"]
+            ).order_by(ConsultationHistory.tarih.desc()).all()
             
+            history = []
+            for result in results:
+                history.append({
+                    "soru": result.soru,
+                    "cevap": result.cevap,
+                    "meslek_dali": result.meslek_dali,
+                    "tarih": result.tarih.isoformat() if result.tarih else None
+                })
             
-            results = conn.execute('''
-                SELECT soru, cevap, meslek_dali, tarih
-                FROM consultation_history 
-                WHERE hasta_id = ? AND doktor_id = ?
-                ORDER BY tarih DESC
-            ''', (patient_id, current_user["user_id"])).fetchall()
-            
-            history = [dict(row) for row in results]
             print(f"DEBUG: Bulunan kayıt sayısı: {len(history)}")
             
             return {"history": history}
+        finally:
+            db.close()
     
     except Exception as e:
         print(f"DEBUG: Hata oluştu: {str(e)}")
@@ -666,21 +672,35 @@ async def speech_to_text(audio: UploadFile = File(...)):
 async def get_treatment_plans(patient_id: int, current_user: dict = Depends(verify_jwt_token)):
     """Hasta için bekleyen tedavi planlarını listeler"""
     try:
-        with sqlite3.connect('medical_ai.db') as conn:
-            conn.row_factory = sqlite3.Row
-            
+        db: Session = SessionLocal()
+        try:
             # Tedavi planlarını al
-            plans = conn.execute('''
-                SELECT tp.*, h.ad, h.soyad, h.email
-                FROM treatment_plans tp
-                LEFT JOIN hastalar h ON tp.hasta_id = h.id
-                WHERE tp.hasta_id = ? AND tp.doktor_id = ?
-                ORDER BY tp.olusturma_tarihi DESC
-            ''', (patient_id, current_user["user_id"])).fetchall()
+            plans = db.query(TreatmentPlans, Hastalar.ad, Hastalar.soyad, Hastalar.email).join(
+                Hastalar, TreatmentPlans.hasta_id == Hastalar.id, isouter=True
+            ).filter(
+                TreatmentPlans.hasta_id == patient_id,
+                TreatmentPlans.doktor_id == current_user["user_id"]
+            ).order_by(TreatmentPlans.olusturma_tarihi.desc()).all()
+            
+            treatment_plans = []
+            for plan, ad, soyad, email in plans:
+                treatment_plans.append({
+                    "id": plan.id,
+                    "hasta_id": plan.hasta_id,
+                    "doktor_id": plan.doktor_id,
+                    "tedavi_plani": plan.tedavi_plani,
+                    "olusturma_tarihi": plan.olusturma_tarihi.isoformat() if plan.olusturma_tarihi else None,
+                    "onay_durumu": plan.onay_durumu,
+                    "ad": ad,
+                    "soyad": soyad,
+                    "email": email
+                })
             
             return {
-                "treatment_plans": [dict(plan) for plan in plans]
+                "treatment_plans": treatment_plans
             }
+        finally:
+            db.close()
     
     except Exception as e:
         print(f"Tedavi planları listeleme hatası: {e}")
@@ -690,52 +710,61 @@ async def get_treatment_plans(patient_id: int, current_user: dict = Depends(veri
 async def approve_and_send_treatment(plan_id: int, current_user: dict = Depends(verify_jwt_token)):
     """Tedavi planını onaylar ve hasta mailine gönderir"""
     try:
-        with sqlite3.connect('medical_ai.db') as conn:
-            conn.row_factory = sqlite3.Row
-            
+        db: Session = SessionLocal()
+        try:
             # Tedavi planını ve hasta bilgilerini al
-            plan_data = conn.execute('''
-                SELECT tp.*, h.ad, h.soyad, h.email, k.ad as doktor_ad, k.soyad as doktor_soyad
-                FROM treatment_plans tp
-                LEFT JOIN hastalar h ON tp.hasta_id = h.id
-                LEFT JOIN kullanicilar k ON tp.doktor_id = k.id
-                WHERE tp.id = ? AND tp.doktor_id = ?
-            ''', (plan_id, current_user["user_id"])).fetchone()
+            plan_query = db.query(
+                TreatmentPlans,
+                Hastalar.ad.label('hasta_ad'),
+                Hastalar.soyad.label('hasta_soyad'),
+                Hastalar.email.label('hasta_email'),
+                Kullanicilar.ad.label('doktor_ad'),
+                Kullanicilar.soyad.label('doktor_soyad')
+            ).join(
+                Hastalar, TreatmentPlans.hasta_id == Hastalar.id, isouter=True
+            ).join(
+                Kullanicilar, TreatmentPlans.doktor_id == Kullanicilar.id, isouter=True
+            ).filter(
+                TreatmentPlans.id == plan_id,
+                TreatmentPlans.doktor_id == current_user["user_id"]
+            ).first()
             
-            if not plan_data:
+            if not plan_query:
                 raise HTTPException(status_code=404, detail="Tedavi planı bulunamadı")
             
-            if not plan_data['email']:
+            plan, hasta_ad, hasta_soyad, hasta_email, doktor_ad, doktor_soyad = plan_query
+            
+            if not hasta_email:
                 raise HTTPException(status_code=400, detail="Hasta email adresi bulunamadı")
             
-            # Doktor adını birleştir
-            doctor_name = f"{plan_data['doktor_ad']} {plan_data['doktor_soyad']}"
-            patient_name = f"{plan_data['ad']} {plan_data['soyad']}"
+            # Doktor ve hasta adını birleştir
+            doctor_name = f"{doktor_ad} {doktor_soyad}"
+            patient_name = f"{hasta_ad} {hasta_soyad}"
             
             # Email gönder
             send_treatment_email(
-                patient_email=plan_data['email'],
+                patient_email=hasta_email,
                 patient_name=patient_name,
                 doctor_name=doctor_name,
-                specialty=plan_data['meslek_dali'],
-                treatment_steps=plan_data['tedavi_adimlari']
+                specialty=plan.meslek_dali,
+                treatment_steps=plan.tedavi_adimlari
             )
             
             # Tedavi planını onaylandı olarak işaretle
-            conn.execute('''
-                UPDATE treatment_plans 
-                SET onay_durumu = 'onaylandi', 
-                    email_gonderildi = TRUE, 
-                    onay_tarihi = CURRENT_TIMESTAMP
-                WHERE id = ?
-            ''', (plan_id,))
+            from datetime import datetime
+            plan.onay_durumu = 'onaylandi'
+            plan.email_gonderildi = True
+            plan.onay_tarihi = datetime.now()
+            db.commit()
             
             return {
                 "success": True,
-                "message": f"Tedavi planı onaylandı ve {plan_data['email']} adresine gönderildi",
-                "patient_email": plan_data['email'],
+                "message": f"Tedavi planı onaylandı ve {hasta_email} adresine gönderildi",
+                "patient_email": hasta_email,
                 "patient_name": patient_name
             }
+        finally:
+            db.close()
     
     except HTTPException:
         raise
@@ -747,20 +776,27 @@ async def approve_and_send_treatment(plan_id: int, current_user: dict = Depends(
 async def reject_treatment_plan(plan_id: int, current_user: dict = Depends(verify_jwt_token)):
     """Tedavi planını reddeder"""
     try:
-        with sqlite3.connect('medical_ai.db') as conn:
-            result = conn.execute('''
-                UPDATE treatment_plans 
-                SET onay_durumu = 'reddedildi'
-                WHERE id = ? AND doktor_id = ?
-            ''', (plan_id, current_user["user_id"]))
+        db: Session = SessionLocal()
+        try:
+            # Tedavi planını bul
+            plan = db.query(TreatmentPlans).filter(
+                TreatmentPlans.id == plan_id,
+                TreatmentPlans.doktor_id == current_user["user_id"]
+            ).first()
             
-            if result.rowcount == 0:
+            if not plan:
                 raise HTTPException(status_code=404, detail="Tedavi planı bulunamadı")
+            
+            # Tedavi planını reddedildi olarak işaretle
+            plan.onay_durumu = 'reddedildi'
+            db.commit()
             
             return {
                 "success": True,
                 "message": "Tedavi planı reddedildi"
             }
+        finally:
+            db.close()
     
     except HTTPException:
         raise
