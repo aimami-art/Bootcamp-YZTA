@@ -354,6 +354,7 @@ Sprint 3'te sistem üzerinde kapsamlı geliştirmeler ve yeni özellikler eklenm
 - Uzman paneli entegre edilebilir.
 - Psikoloji alana için hasta kayıtta isim soy isim yerine takma ad alınabilir.
 - Psikoloji alanı için hastaya gönderilen mail de tanı bilgileri gibi kritik bilgilerin hastaya gönderilmemesi sağlanabilir.
+- Heyet sistemi entegre edilebilir.
 
 ### Öğrenilenler:
 - RAG sisteminin AI yanıt kalitesine olan etkisi anlaşıldı
