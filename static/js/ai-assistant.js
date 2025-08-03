@@ -24,10 +24,22 @@ function initializeAIAssistant() {
         return;
     }
     
-    document.getElementById('patientTitle').textContent = `${currentPatientName} - AI Konsültasyon`;
-    document.getElementById('specialtyInfo').textContent = `${currentSpecialty.charAt(0).toUpperCase() + currentSpecialty.slice(1)} dalı için AI destekli tanı ve öneriler`;
+    // DOM elementlerini güvenli şekilde güncelle
+    const patientTitle = document.getElementById('patientTitle');
+    const specialtyInfo = document.getElementById('specialtyInfo');
+    
+    if (patientTitle) {
+        patientTitle.textContent = `${currentPatientName} - AI Konsültasyon`;
+    }
+    
+    if (specialtyInfo) {
+        specialtyInfo.textContent = `${currentSpecialty.charAt(0).toUpperCase() + currentSpecialty.slice(1)} dalı için AI destekli tanı ve öneriler`;
+    }
     
     addSpecialtyMessage();
+    
+    // Mikrofon butonunu başlat
+    initializeMicrophoneButton();
 }
 
 function addSpecialtyMessage() {
@@ -210,6 +222,13 @@ document.getElementById('promptInput').addEventListener('input', function() {
 // Örnek sorular fonksiyonu
 function addSamplePrompts() {
     const samplePromptsContainer = document.getElementById('sample-prompts');
+    
+    // Element varsa devam et, yoksa çık
+    if (!samplePromptsContainer) {
+        console.warn('sample-prompts elementi bulunamadı');
+        return;
+    }
+    
     samplePromptsContainer.innerHTML = '';
     
     let samplePrompts = [];
@@ -520,6 +539,11 @@ let audioChunks = [];
 // Gemini ile ses tanıma için yeni fonksiyon
 async function startGeminiVoiceRecording() {
     try {
+        // getUserMedia API'sinin varlığını kontrol et
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            throw new Error('Bu tarayıcı mikrofon erişimini desteklemiyor');
+        }
+        
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         mediaRecorder = new MediaRecorder(stream);
         audioChunks = [];
@@ -584,12 +608,19 @@ async function processAudioWithGemini(audioBlob) {
     }
 }
 
-// Mikrofon butonuna tıklama olayı
-document.getElementById('micBtn').addEventListener('click', function() {
-    if (recognizing) {
-        stopGeminiVoiceRecording();
+// Mikrofon butonuna tıklama olayı - DOMContentLoaded içinde eklenebilir
+function initializeMicrophoneButton() {
+    const micBtn = document.getElementById('micBtn');
+    if (micBtn) {
+        micBtn.addEventListener('click', function() {
+            if (recognizing) {
+                stopGeminiVoiceRecording();
+            } else {
+                startGeminiVoiceRecording();
+            }
+        });
     } else {
-        startGeminiVoiceRecording();
+        console.warn('Mikrofon butonu bulunamadı');
     }
-});
+}
 
