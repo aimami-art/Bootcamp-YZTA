@@ -167,7 +167,7 @@ async def kullanici_giris(user: UserLogin, db: Session = Depends(get_db)):
     
     return {"message": "Giriş başarılı", "token": token, "user_id": db_user.id}
 
-@router.get("/auth/google/url")
+@router.get("/google/url")
 async def google_login_url():
     # Debug bilgisi yazdır
     print(f"Google OAuth URL endpoint'i çağrıldı")
@@ -186,7 +186,7 @@ async def google_login_url():
     # Doğrudan yönlendirme yap
     return RedirectResponse(url=auth_url)
 
-@router.get("/auth/google/callback")
+@router.get("/google/callback")
 async def google_auth_callback(code: str, state: str, request: Request):
     try:
         print(f"Google OAuth callback çağrıldı. Code: {code[:10]}...")
