@@ -163,7 +163,7 @@ Sprint 2'de sistem üzerinde önemli iyileştirmeler ve yeni özellikler gelişt
 
 ## Daily Scrum: WhatsApp üzerinden gerçekleştirilmiştir.
 
-[Bağlantı metni](https://drive.google.com/drive/folders/1lwllg_h4R7DX_PBcP5aGkxQG-hdn_Oet?usp=sharing)
+[Bağlantı metni](https://drive.google.com/drive/folders/1E73AgaLtTcYYkRNrP4ZHfv20VyfhWtTd?usp=sharing)
 
 ## Sprint Board Update
 ![](imagess/Sprint_2_Trello2.png)
@@ -268,7 +268,7 @@ Sprint 3'te sistem üzerinde kapsamlı geliştirmeler ve yeni özellikler eklenm
 
 ## Daily Scrum: WhatsApp üzerinden gerçekleştirilmiştir.
 
-[Bağlantı metni](https://drive.google.com/drive/folders/1E73AgaLtTcYYkRNrP4ZHfv20VyfhWtTd?usp=sharing)
+[Bağlantı metni](https://drive.google.com/drive/folders/1lwllg_h4R7DX_PBcP5aGkxQG-hdn_Oet?usp=sharing)
 
 ## Sprint Board Update
 ![](imagess/trellos3_1.png)
