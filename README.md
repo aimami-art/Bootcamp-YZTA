@@ -246,7 +246,7 @@ Sprint 2'de sistem üzerinde önemli iyileştirmeler ve yeni özellikler gelişt
 # 📊 Sprint 3
 
 ## Sprint Notları
-Sprint 3'te sistem üzerinde kapsamlı geliştirmeler ve yeni özellikler eklenmiştir. RAG (Retrieval-Augmented Generation) sistemi tam entegrasyonu gerçekleştirilmiştir, AI sağlık haberleri sistemi eklenmiştir, admin paneli ve RAG yönetim arayüzü geliştirilmiştir, kullanıcı hesap ayarları ve profil yönetimi sistemi eklenmiştir, veritabanı yapısı genişletilmiştir, güvenlik önlemleri artırılmıştır ve sistem performansı optimize edilmiştir.
+Sprint 3'te sistem üzerinde kapsamlı geliştirmeler ve yeni özellikler eklenmiştir. RAG (Retrieval-Augmented Generation) sistemi tam entegrasyonu gerçekleştirilmiştir, AI sağlık haberleri sistemi eklenmiştir, admin paneli ve RAG yönetim arayüzü geliştirilmiştir, kullanıcı hesap ayarları ve profil yönetimi sistemi eklenmiştir, veritabanı yapısı genişletilmiştir, güvenlik önlemleri artırılmıştır ve sistem performansı optimize edilmiştir. Uzman paneli sayfaları entegresi geliştirme aşamasına bırakılmıştır. 
 
 ## Bu Sprint İçinde Tahmin Edilen Tamamlanacak Puan
 **Toplam Puan: 100**
