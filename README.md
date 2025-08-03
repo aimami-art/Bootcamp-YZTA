@@ -1,4 +1,5 @@
 # Takım İsmi
+
 - NextGen Healers
 
 ![](imagess/takım_logo.png)
@@ -12,7 +13,10 @@
 - **Zeynep Yıldız** – Developer
 
 # Ürün İsmi
-![](imagess/MedIntelSmall.png)
+
+- https://medintell.org/
+
+- ![](imagess/MedIntelSmall.png)
 
 ## Product Backlog URL
 [Trello Panosu](https://trello.com/b/eOTahhcW)
