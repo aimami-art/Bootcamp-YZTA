@@ -4,7 +4,7 @@ from sqlalchemy import text
 import os
 from models import AIPrompt
 from routers.auth import verify_jwt_token
-from database import get_db, Hastalar, ConsultationHistory, TreatmentPlans, SessionLocal
+from database import get_db, Hastalar, ConsultationHistory, TreatmentPlans, Kullanicilar, SessionLocal
 from dotenv import load_dotenv
 import smtplib
 from email.mime.text import MIMEText
