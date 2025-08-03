@@ -57,7 +57,7 @@ async function loadPatients() {
     
     try {
         const token = getAuthToken();
-        const response = await fetch(`${window.location.protocol}//${window.location.host}/api/patients`, {
+        const response = await fetch(`${window.location.protocol}//${window.location.host}/api/patients/`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -200,7 +200,7 @@ async function handlePatientFormSubmit(e) {
         const token = getAuthToken();
         console.log('API isteği gönderiliyor...');
         
-        const response = await fetch(`${window.location.protocol}//${window.location.host}/api/patients`, {
+        const response = await fetch(`${window.location.protocol}//${window.location.host}/api/patients/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
