@@ -755,7 +755,7 @@ async def approve_and_send_treatment(plan_id: int, current_user: dict = Depends(
             # Tedavi planını onaylandı olarak işaretle
             from datetime import datetime
             plan.onay_durumu = 'onaylandi'
-            plan.email_gonderildi = True
+            plan.email_gonderildi = 1  # Integer field olduğu için 1 kullanıyoruz
             plan.onay_tarihi = datetime.now()
             db.commit()
             
