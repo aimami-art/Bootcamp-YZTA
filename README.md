@@ -352,6 +352,8 @@ Sprint 3'te sistem üzerinde kapsamlı geliştirmeler ve yeni özellikler eklenm
 - Mobil uygulama geliştirilebilir
 - Psikoloji için hasta isim soyisim yerine takma ad kaydedilmesi
 - Uzman paneli entegre edilebilir.
+- Psikoloji alana için hasta kayıtta isim soy isim yerine takma ad alınabilir.
+- Psikoloji alanı için hastaya gönderilen mail de tanı bilgileri gibi kritik bilgilerin hastaya gönderilmemesi sağlanabilir.
 
 ### Öğrenilenler:
 - RAG sisteminin AI yanıt kalitesine olan etkisi anlaşıldı
