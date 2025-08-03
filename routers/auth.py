@@ -395,6 +395,12 @@ async def delete_account(request: DeleteAccount, credentials: HTTPAuthorizationC
             # Önce consultation_history kayıtlarını sil
             db.execute(text("DELETE FROM consultation_history WHERE doktor_id = :user_id"), {"user_id": user_id})
             
+            # Treatment plans kayıtlarını sil
+            db.execute(text("DELETE FROM treatment_plans WHERE doktor_id = :user_id"), {"user_id": user_id})
+            
+            # RAG uploads kayıtlarını sil
+            db.execute(text("DELETE FROM rag_uploads WHERE uploaded_by = :user_id"), {"user_id": user_id})
+            
             # Hasta kayıtlarını sil
             db.execute(text("DELETE FROM hastalar WHERE doktor_id = :user_id"), {"user_id": user_id})
             
