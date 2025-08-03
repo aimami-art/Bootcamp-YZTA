@@ -351,6 +351,7 @@ Sprint 3'te sistem üzerinde kapsamlı geliştirmeler ve yeni özellikler eklenm
 - Kullanıcı raporlama ve analitik özellikleri geliştirilebilir
 - Mobil uygulama geliştirilebilir
 - Psikoloji için hasta isim soyisim yerine takma ad kaydedilmesi
+- Uzman paneli entegre edilebilir.
 
 ### Öğrenilenler:
 - RAG sisteminin AI yanıt kalitesine olan etkisi anlaşıldı
